@@ -2,18 +2,30 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 
-type Currency = { code:string; symbol:string; name:string };
+type Currency = { code:string; symbol:string; name:string; flag:string };
 
 const currencies: Currency[] = [
-  { code:"EUR", symbol:"€", name:"Euro" },
-  { code:"NOK", symbol:"kr", name:"Norwegian krone" },
-  { code:"SEK", symbol:"kr", name:"Swedish krona" },
-  { code:"DKK", symbol:"kr", name:"Danish krone" },
-  { code:"GBP", symbol:"£", name:"British pound" },
-  { code:"USD", symbol:"$", name:"US dollar" },
-  { code:"EGP", symbol:"E£", name:"Egyptian pound" },
-  { code:"AED", symbol:"د.إ", name:"UAE dirham" },
-  { code:"SAR", symbol:"﷼", name:"Saudi riyal" },
+  { code:"EUR", symbol:"€", name:"Euro", flag:"🇪🇺" },
+  { code:"USD", symbol:"$", name:"US Dollar", flag:"🇺🇸" },
+  { code:"GBP", symbol:"£", name:"British Pound", flag:"🇬🇧" },
+  { code:"NOK", symbol:"kr", name:"Norwegian Krone", flag:"🇳🇴" },
+  { code:"SEK", symbol:"kr", name:"Swedish Krona", flag:"🇸🇪" },
+  { code:"DKK", symbol:"kr", name:"Danish Krone", flag:"🇩🇰" },
+  { code:"CHF", symbol:"CHF", name:"Swiss Franc", flag:"🇨🇭" },
+  { code:"CAD", symbol:"CA$", name:"Canadian Dollar", flag:"🇨🇦" },
+  { code:"AUD", symbol:"A$", name:"Australian Dollar", flag:"🇦🇺" },
+  { code:"NZD", symbol:"NZ$", name:"New Zealand Dollar", flag:"🇳🇿" },
+  { code:"JPY", symbol:"¥", name:"Japanese Yen", flag:"🇯🇵" },
+  { code:"CNY", symbol:"¥", name:"Chinese Yuan", flag:"🇨🇳" },
+  { code:"INR", symbol:"₹", name:"Indian Rupee", flag:"🇮🇳" },
+  { code:"EGP", symbol:"E£", name:"Egyptian Pound", flag:"🇪🇬" },
+  { code:"AED", symbol:"د.إ", name:"UAE Dirham", flag:"🇦🇪" },
+  { code:"SAR", symbol:"﷼", name:"Saudi Riyal", flag:"🇸🇦" },
+  { code:"QAR", symbol:"﷼", name:"Qatari Riyal", flag:"🇶🇦" },
+  { code:"KWD", symbol:"د.ك", name:"Kuwaiti Dinar", flag:"🇰🇼" },
+  { code:"BHD", symbol:".د.ب", name:"Bahraini Dinar", flag:"🇧🇭" },
+  { code:"PLN", symbol:"zł", name:"Polish Złoty", flag:"🇵🇱" },
+  { code:"CZK", symbol:"Kč", name:"Czech Koruna", flag:"🇨🇿" },
 ];
 
 function AuthPanel({ session, onSignOut }: { session: Session | null; onSignOut: () => void }) {
@@ -54,6 +66,8 @@ function AuthPanel({ session, onSignOut }: { session: Session | null; onSignOut:
 
 function App() {
   const [currencyCode,setCurrencyCode] = useState("EUR");
+  const [currencyOpen,setCurrencyOpen] = useState(false);
+  const [currencySearch,setCurrencySearch] = useState("");
   const [income,setIncome] = useState("5000");
   const [expenses,setExpenses] = useState("3500");
   const [goal,setGoal] = useState("10000");
@@ -109,12 +123,23 @@ function App() {
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
           {installPrompt && <button onClick={()=>void installApp()} className="rounded-xl border border-lime-300/30 bg-lime-300/10 px-4 py-3 text-sm font-bold text-lime-300">Install app</button>}
           <button onClick={()=>setShowAuth(true)} className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-200">{session ? "Account" : "Sign in"}</button>
-          <label className="w-full sm:w-56">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Currency</span>
-          <select value={currencyCode} onChange={e=>setCurrencyCode(e.target.value)} className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm outline-none focus:border-lime-300">
-            {currencies.map(c=><option key={c.code} value={c.code}>{c.code} · {c.name}</option>)}
-          </select>
-          </label>
+          <div className="relative w-full sm:w-64">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Currency</span>
+            <button type="button" onClick={()=>setCurrencyOpen(v=>!v)} className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-3 text-left text-sm outline-none transition hover:border-zinc-700 focus:border-lime-300">
+              <span className="flex items-center gap-3"><span className="text-lg">{currency.flag}</span><span><strong className="block text-zinc-100">{currency.code}</strong><span className="text-xs text-zinc-500">{currency.name}</span></span></span>
+              <span className={`text-zinc-500 transition-transform ${currencyOpen ? "rotate-180" : ""}`}>⌄</span>
+            </button>
+            {currencyOpen && <div className="absolute right-0 top-full z-40 mt-2 w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-2 shadow-2xl shadow-black/40 animate-fade-up">
+              <input autoFocus value={currencySearch} onChange={e=>setCurrencySearch(e.target.value)} placeholder="Search currency..." className="mb-2 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm outline-none focus:border-lime-300" />
+              <div className="max-h-72 overflow-y-auto">
+                {currencies.filter(item=>`${item.code} ${item.name}`.toLowerCase().includes(currencySearch.toLowerCase())).map(item=>
+                  <button type="button" key={item.code} onClick={()=>{setCurrencyCode(item.code);setCurrencyOpen(false);setCurrencySearch("")}} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-zinc-800 ${item.code===currencyCode ? "bg-lime-300/10 text-lime-300" : "text-zinc-200"}`}>
+                    <span className="text-lg">{item.flag}</span><span className="flex-1"><strong className="block text-sm">{item.code}</strong><span className="text-xs text-zinc-500">{item.name}</span></span>{item.code===currencyCode&&<span>✓</span>}
+                  </button>
+                )}
+              </div>
+            </div>}
+          </div>
         </div>
       </header>
 
