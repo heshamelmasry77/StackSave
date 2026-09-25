@@ -164,6 +164,42 @@ Currency formatting uses the browser's built-in `Intl.NumberFormat` API.
 
 > **Important:** Changing the currency changes how values are displayed. SlackSave does not currently perform exchange-rate conversion.
 
+## 📱 PWA & Authentication
+
+SlackSave is configured as an installable Progressive Web App.
+
+### PWA features
+
+- Installable from supported browsers
+- Standalone app window
+- Automatic service-worker updates
+- Cached application shell for faster repeat launches
+- Branded web-app icons and manifest
+- Optional in-app **Install app** action
+
+### Authentication
+
+Authentication uses **Supabase Auth** for low-friction sign-in:
+
+- Google sign-in
+- Passwordless email magic links
+- Persistent sessions in browser storage
+- Automatic session restoration
+- Automatic token refresh
+
+Create a Supabase project and enable Google and Email/OTP providers.
+
+Create `.env.local`:
+
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Add your local and production URLs to Supabase's allowed redirect URLs.
+
+> Never commit `.env.local` or a Supabase service-role key. Only the public anon/publishable key belongs in the frontend.
+
 ## 🔒 Privacy
 
 SlackSave is designed to keep the calculator simple and private.
@@ -174,7 +210,7 @@ SlackSave is designed to keep the calculator simple and private.
 - Calculations happen in the browser.
 - Income, expenses, and goals are held in local application state.
 
-Because the application currently does not persist data, refreshing the page resets the entered values.
+Calculator inputs currently live in local application state. Authentication sessions persist through Supabase; saving calculator plans to the user's account is a next-stage feature.
 
 ## 🎨 Design
 
