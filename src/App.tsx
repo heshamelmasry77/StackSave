@@ -24,7 +24,7 @@ function AuthPanel({ session, onSignOut }: { session: Session | null; onSignOut:
 
   if (!isSupabaseConfigured) return <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-5 text-sm text-orange-200"><p className="font-bold">Login is almost ready.</p><p className="mt-1 text-orange-200/70">Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable authentication.</p></div>;
 
-  if (session) return <div className="flex items-center gap-3"><span className="hidden max-w-48 truncate text-sm text-zinc-400 sm:block">{session.user.email}</span><button onClick={onSignOut} className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-300">Log out</button></div>;
+  if (session) return <div className="flex items-center gap-3 animate-fade-up"><span className="hidden max-w-48 truncate text-sm text-zinc-400 sm:block">{session.user.email}</span><button onClick={onSignOut} className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-300">Log out</button></div>;
 
   const google = async () => {
     setLoading(true); setError("");
@@ -96,12 +96,12 @@ function App() {
   const money=(n:number)=>new Intl.NumberFormat(undefined,{style:"currency",currency:currency.code,maximumFractionDigits:0}).format(n);
 
   return <div className="min-h-screen bg-zinc-950 text-zinc-100">
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-12">
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-12 animate-page-in">
       {showAuth && <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onClick={()=>setShowAuth(false)}><div onClick={e=>e.stopPropagation()}><AuthPanel session={session} onSignOut={()=>void signOut()} /></div></div>}
       <header className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-xl bg-lime-300 font-black text-zinc-950">S</div>
+            <div className="grid size-9 place-items-center rounded-xl bg-lime-300 font-black text-zinc-950 animate-logo-pulse">S</div>
             <span className="text-xl font-extrabold tracking-tight">SlackSave</span>
           </div>
           <p className="mt-2 text-sm text-zinc-500">Know what you keep. Build what you want.</p>
@@ -118,14 +118,14 @@ function App() {
         </div>
       </header>
 
-      <section className="mb-5 overflow-hidden rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-900/60 p-6 sm:p-10">
+      <section className="mb-5 overflow-hidden rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-900/60 p-6 sm:p-10 animate-fade-up animation-delay-100 hover:border-zinc-700 transition-colors duration-300">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Your savings</p>
-            <h1 className="mt-3 text-5xl font-black tracking-[-0.06em] sm:text-7xl">{money(values.monthly)} <span className="text-lg font-medium tracking-normal text-zinc-500">/ month</span></h1>
+            <h1 className="mt-3 text-5xl font-black tracking-[-0.06em] sm:text-7xl tabular-nums">{money(values.monthly)} <span className="text-lg font-medium tracking-normal text-zinc-500">/ month</span></h1>
             <p className="mt-4 text-sm text-zinc-500">You’re keeping <strong className="text-lime-300">{values.rate.toFixed(1)}%</strong> of your monthly income.</p>
           </div>
-          <div className="rounded-2xl bg-lime-300 p-5 text-zinc-950 sm:min-w-48">
+          <div className="rounded-2xl bg-lime-300 p-5 text-zinc-950 sm:min-w-48 animate-float-slow">
             <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Yearly</p>
             <p className="mt-2 text-2xl font-black tracking-tight">{money(values.yearly)}</p>
           </div>
@@ -133,7 +133,7 @@ function App() {
       </section>
 
       <section className="grid gap-5 md:grid-cols-[1.2fr_.8fr]">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 animate-fade-up animation-delay-200 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-xl hover:shadow-black/20">
           <div className="mb-7 flex items-start justify-between">
             <div><p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Inputs</p><h2 className="mt-1 text-xl font-bold tracking-tight">Your monthly numbers</h2></div>
             <span className="grid size-10 place-items-center rounded-xl bg-zinc-800 text-sm font-bold text-lime-300">{currency.symbol}</span>
@@ -151,18 +151,18 @@ function App() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 animate-fade-up animation-delay-300 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-xl hover:shadow-black/20">
           <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Savings goal</p>
           {values.months ? <>
             <h2 className="mt-5 text-4xl font-black tracking-tight">{values.months} months</h2>
             <p className="mt-2 text-sm text-zinc-500">to reach {money(values.goal)}</p>
-            <div className="mt-9 h-2 overflow-hidden rounded-full bg-zinc-800"><div className="h-full rounded-full bg-lime-300 transition-all" style={{width:`${Math.min(100,values.monthly/values.goal*100)}%`}} /></div>
+            <div className="mt-9 h-2 overflow-hidden rounded-full bg-zinc-800"><div className="h-full rounded-full bg-lime-300 transition-[width] duration-700 ease-out animate-progress-glow" style={{width:`${Math.min(100,values.monthly/values.goal*100)}%`}} /></div>
             <div className="mt-5 flex justify-between text-xs"><span className="text-zinc-500">Monthly contribution</span><strong>{money(values.monthly)}</strong></div>
           </> : <div className="mt-5"><h2 className="text-3xl font-black">Set a goal</h2><p className="mt-2 text-sm text-zinc-500">Add a savings goal to see your timeline.</p></div>}
         </div>
       </section>
 
-      <footer className="flex flex-col gap-2 px-1 pt-7 text-xs text-zinc-600 sm:flex-row sm:justify-between"><span>SlackSave</span><span>Calculations happen locally in your browser.</span></footer>
+      <footer className="flex flex-col gap-2 px-1 pt-7 text-xs text-zinc-600 sm:flex-row sm:justify-between animate-fade-up animation-delay-400"><span>SlackSave</span><span>Calculations happen locally in your browser.</span></footer>
     </main>
   </div>;
 }
