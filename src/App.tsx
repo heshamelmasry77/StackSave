@@ -38,7 +38,7 @@ function App() {
         <div>
           <div className="flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-xl bg-lime-300 font-black text-zinc-950">S</div>
-            <span className="text-xl font-extrabold tracking-tight">StackSave</span>
+            <span className="text-xl font-extrabold tracking-tight">SlackSave</span>
           </div>
           <p className="mt-2 text-sm text-zinc-500">Know what you keep. Build what you want.</p>
         </div>
@@ -94,7 +94,7 @@ function App() {
         </div>
       </section>
 
-      <footer className="flex flex-col gap-2 px-1 pt-7 text-xs text-zinc-600 sm:flex-row sm:justify-between"><span>StackSave</span><span>Calculations happen locally in your browser.</span></footer>
+      <footer className="flex flex-col gap-2 px-1 pt-7 text-xs text-zinc-600 sm:flex-row sm:justify-between"><span>SlackSave</span><span>Calculations happen locally in your browser.</span></footer>
     </main>
   </div>;
 }
