@@ -1,8 +1,8 @@
-# StackSave
+# SlackSave
 
 > A fast, privacy-friendly savings calculator built with React, TypeScript, Vite, and Tailwind CSS.
 
-StackSave helps you understand how much money you save each month and year, measure your savings rate, and estimate how long it will take to reach a savings goal.
+SlackSave helps you understand how much money you save each month and year, measure your savings rate, and estimate how long it will take to reach a savings goal.
 
 All calculations are performed locally in the browser. No account, database, or backend is required.
 
@@ -31,7 +31,7 @@ All calculations are performed locally in the browser. No account, database, or 
 ## 📁 Project Structure
 
 ```text
-StackSave/
+SlackSave/
 ├── src/
 │   ├── App.tsx          # Main application and calculator logic
 │   ├── index.css        # Tailwind CSS entry point and global styles
@@ -68,8 +68,8 @@ git --version
 Clone the repository:
 
 ```bash
-git clone https://github.com/heshamelmasry77/StackSave.git
-cd StackSave
+git clone https://github.com/heshamelmasry77/SlackSave.git
+cd SlackSave
 ```
 
 Install dependencies:
@@ -112,7 +112,7 @@ The generated production files are placed in the `dist/` directory.
 
 ### Monthly savings
 
-StackSave calculates monthly savings as:
+SlackSave calculates monthly savings as:
 
 ```text
 Monthly savings = Monthly income - Monthly expenses
@@ -162,11 +162,11 @@ The current currency list includes:
 
 Currency formatting uses the browser's built-in `Intl.NumberFormat` API.
 
-> **Important:** Changing the currency changes how values are displayed. StackSave does not currently perform exchange-rate conversion.
+> **Important:** Changing the currency changes how values are displayed. SlackSave does not currently perform exchange-rate conversion.
 
 ## 🔒 Privacy
 
-StackSave is designed to keep the calculator simple and private.
+SlackSave is designed to keep the calculator simple and private.
 
 - No user account is required.
 - No financial data is submitted to an API.
@@ -178,7 +178,7 @@ Because the application currently does not persist data, refreshing the page res
 
 ## 🎨 Design
 
-StackSave uses a dark, minimal interface with:
+SlackSave uses a dark, minimal interface with:
 
 - Tailwind CSS utility classes
 - Responsive layouts
@@ -233,7 +233,7 @@ src/
 
 ## 🌐 Deployment
 
-StackSave is a static frontend application and can be deployed to services such as:
+SlackSave is a static frontend application and can be deployed to services such as:
 
 - Vercel
 - Netlify
