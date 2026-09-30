@@ -2,60 +2,91 @@
 
 > A fast, privacy-friendly savings calculator built with React, TypeScript, Vite, and Tailwind CSS.
 
-SlackSave helps you understand how much money you save each month and year, measure your savings rate, and estimate how long it will take to reach a savings goal.
+SlackSave helps you understand how much you save each month and year, measure your savings rate, and estimate how long it will take to reach a savings goal.
 
-All calculations are performed locally in the browser. No account, database, or backend is required.
+The calculator runs locally in the browser. Authentication/PWA infrastructure is present, while persistent savings data and database integration are planned for a later stage.
 
 ## ✨ Features
 
-- **Multiple currencies** — Choose from EUR, NOK, SEK, DKK, GBP, USD, EGP, AED, and SAR.
-- **Monthly savings calculation** — Automatically calculates income minus expenses.
-- **Yearly savings projection** — Converts monthly savings into an annual estimate.
-- **Savings rate** — Shows what percentage of monthly income is being saved.
-- **Savings goals** — Enter a target amount and estimate the number of months required to reach it.
-- **Progress indicator** — Visualises the relationship between your monthly contribution and your goal.
-- **Responsive design** — Optimised for desktop, tablet, and mobile screens.
-- **Privacy-first** — Financial inputs stay in the browser and are not sent to a server.
-- **No backend required** — The application is entirely client-side.
+- **Monthly savings** — Calculates income minus expenses.
+- **Yearly projection** — Projects monthly savings across 12 months.
+- **Savings rate** — Shows the percentage of monthly income being saved.
+- **Savings goals** — Estimates the months required to reach a target.
+- **Goal progress** — Visualises the monthly contribution against the target.
+- **21 currencies** — EUR, USD, GBP, NOK, SEK, DKK, CHF, CAD, AUD, NZD, JPY, CNY, INR, EGP, AED, SAR, QAR, KWD, BHD, PLN and CZK.
+- **Searchable currency selector** — Flag, code, name and selected-state indicator.
+- **Responsive UI** — Mobile, tablet and desktop layouts.
+- **Animated interface** — Entrance animations, hover states, progress animation and subtle motion.
+- **PWA-ready** — Installable web app with manifest, service worker and application-shell caching.
+- **Optional authentication UI** — Supabase Auth scaffolding for Google and passwordless email sign-in.
+- **Privacy-first calculator** — Financial inputs are processed locally and are not currently saved to a database.
+
+## 🧱 Current Architecture
+
+SlackSave is currently a client-side React application.
+
+```text
+Browser
+  │
+  ├── React + TypeScript
+  ├── Tailwind CSS
+  ├── Local calculator state
+  ├── Intl.NumberFormat
+  └── PWA service worker
+          │
+          └── Optional Supabase Auth
+```
+
+There is currently **no persistent savings database** and no exchange-rate API.
 
 ## 🛠 Tech Stack
 
 | Technology | Purpose |
 | --- | --- |
-| React | User interface |
-| TypeScript | Type safety and maintainability |
-| Vite | Development server and production build |
-| Tailwind CSS | Styling and responsive UI |
-| Intl.NumberFormat | Currency formatting |
+| React 19 | User interface |
+| TypeScript | Type safety |
+| Vite 7 | Development server and production build |
+| Tailwind CSS 4 | Styling and responsive UI |
+| @tailwindcss/vite | Tailwind/Vite integration |
+| vite-plugin-pwa | PWA manifest and service worker |
+| Supabase JS | Authentication scaffolding |
+| Intl.NumberFormat | Locale-aware currency formatting |
 
 ## 📁 Project Structure
 
 ```text
-SlackSave/
+StackSave/
+├── public/
+│   ├── favicon.svg
+│   ├── icon.svg
+│   └── site.webmanifest
 ├── src/
-│   ├── App.tsx          # Main application and calculator logic
-│   ├── index.css        # Tailwind CSS entry point and global styles
-│   └── main.tsx         # React application entry point
-├── index.html           # HTML entry point
-├── package.json         # Dependencies and npm scripts
-├── tsconfig.json        # TypeScript project configuration
-├── tsconfig.app.json    # Application TypeScript configuration
-├── tsconfig.node.json   # Vite/Node TypeScript configuration
-├── vite.config.ts       # Vite and Tailwind configuration
-└── README.md            # Project documentation
+│   ├── lib/
+│   │   └── supabase.ts
+│   ├── App.tsx
+│   ├── index.css
+│   └── main.tsx
+├── .env.example
+├── .gitignore
+├── index.html
+├── package.json
+├── tsconfig.json
+├── tsconfig.app.json
+├── tsconfig.node.json
+├── vite.config.ts
+├── LICENSE
+└── README.md
 ```
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-Make sure you have the following installed:
-
-- Node.js 20 or newer
-- npm 10 or newer
+- Node.js 20+
+- npm 10+
 - Git
 
-You can verify your versions with:
+Check your versions:
 
 ```bash
 node --version
@@ -65,164 +96,162 @@ git --version
 
 ### Installation
 
-Clone the repository:
-
 ```bash
-git clone https://github.com/heshamelmasry77/SlackSave.git
-cd SlackSave
-```
-
-Install dependencies:
-
-```bash
+git clone https://github.com/heshamelmasry77/StackSave.git
+cd StackSave
 npm install
 ```
 
-### Start the development server
+### Development
 
 ```bash
 npm run dev
 ```
 
-Vite will provide a local development URL, normally:
+Open the local URL shown by Vite, normally `http://localhost:5173`.
 
-```text
-http://localhost:5173
-```
-
-Open the URL in your browser.
-
-## 📦 Production Build
-
-Create an optimised production build:
+### Production build
 
 ```bash
 npm run build
 ```
 
-Preview the production build locally:
+This runs TypeScript checks and creates the production build in `dist/`.
+
+Preview it locally:
 
 ```bash
 npm run preview
 ```
 
-The generated production files are placed in the `dist/` directory.
-
-## 🧮 How the Calculator Works
+## 💰 Calculator Logic
 
 ### Monthly savings
 
-SlackSave calculates monthly savings as:
-
 ```text
-Monthly savings = Monthly income - Monthly expenses
+Monthly savings = max(0, monthly income - monthly expenses)
 ```
 
-If expenses are greater than income, savings are displayed as `0` rather than a negative savings amount.
+If expenses are higher than income, SlackSave displays zero monthly savings rather than a negative value.
 
 ### Yearly savings
 
 ```text
-Yearly savings = Monthly savings × 12
+Yearly savings = monthly savings × 12
 ```
-
-This is a simple projection assuming the monthly income and expenses remain unchanged.
 
 ### Savings rate
 
 ```text
-Savings rate = (Monthly savings ÷ Monthly income) × 100
+Savings rate = (monthly savings ÷ monthly income) × 100
 ```
 
-If no income is entered, the savings rate is `0%`.
+When income is zero or missing, the savings rate is 0%.
 
-### Time to savings goal
-
-When a savings goal is provided:
+### Time to goal
 
 ```text
-Months to goal = Ceiling(Savings goal ÷ Monthly savings)
+Months to goal = ceil(savings goal ÷ monthly savings)
 ```
 
-The estimate assumes the same monthly savings contribution continues throughout the period.
+If monthly savings is zero, SlackSave does not display a timeline.
 
-## 💱 Supported Currencies
+## 💱 Currency Support
 
-The current currency list includes:
+| Code | Currency |
+| --- | --- |
+| EUR | Euro |
+| USD | US Dollar |
+| GBP | British Pound |
+| NOK | Norwegian Krone |
+| SEK | Swedish Krona |
+| DKK | Danish Krone |
+| CHF | Swiss Franc |
+| CAD | Canadian Dollar |
+| AUD | Australian Dollar |
+| NZD | New Zealand Dollar |
+| JPY | Japanese Yen |
+| CNY | Chinese Yuan |
+| INR | Indian Rupee |
+| EGP | Egyptian Pound |
+| AED | UAE Dirham |
+| SAR | Saudi Riyal |
+| QAR | Qatari Riyal |
+| KWD | Kuwaiti Dinar |
+| BHD | Bahraini Dinar |
+| PLN | Polish Złoty |
+| CZK | Czech Koruna |
 
-- EUR — Euro
-- NOK — Norwegian krone
-- SEK — Swedish krona
-- DKK — Danish krone
-- GBP — British pound
-- USD — US dollar
-- EGP — Egyptian pound
-- AED — UAE dirham
-- SAR — Saudi riyal
+Formatting uses the browser's `Intl.NumberFormat` API.
 
-Currency formatting uses the browser's built-in `Intl.NumberFormat` API.
+> **Important:** Selecting a currency changes display formatting only. SlackSave does **not** currently convert between currencies or use live exchange rates.
 
-> **Important:** Changing the currency changes how values are displayed. SlackSave does not currently perform exchange-rate conversion.
+## 📱 PWA
 
-## 📱 PWA & Authentication
+SlackSave is configured as an installable Progressive Web App through `vite-plugin-pwa`.
 
-SlackSave is configured as an installable Progressive Web App.
+Current PWA capabilities:
 
-### PWA features
-
-- Installable from supported browsers
-- Standalone app window
+- Installable on supported browsers/devices
+- Standalone app display mode
 - Automatic service-worker updates
-- Cached application shell for faster repeat launches
-- Branded web-app icons and manifest
-- Optional in-app **Install app** action
+- Application-shell caching
+- Offline navigation fallback
+- Web app manifest
+- Branded favicon and PWA icon
+- In-app install prompt when supported by the browser
 
-### Authentication
+The PWA configuration lives in `vite.config.ts`.
 
-Authentication uses **Supabase Auth** for low-friction sign-in:
+## 🔐 Authentication
 
-- Google sign-in
+Supabase Auth is currently **prepared but optional**.
+
+When Supabase environment variables are configured, the UI supports:
+
+- Google OAuth
 - Passwordless email magic links
-- Persistent sessions in browser storage
-- Automatic session restoration
-- Automatic token refresh
+- Session restoration
+- Automatic auth state updates
+- Sign-out
 
-Create a Supabase project and enable Google and Email/OTP providers.
-
-Create `.env.local`:
+Create a `.env.local` file:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Add your local and production URLs to Supabase's allowed redirect URLs.
+> Never commit `.env.local`, service-role keys, or other secrets. Only a public Supabase client key intended for frontend use should be exposed to the browser.
 
-> Never commit `.env.local` or a Supabase service-role key. Only the public anon/publishable key belongs in the frontend.
+### Current limitation
+
+Authentication does **not** currently save calculator data to Supabase. Persistent user savings plans and database integration are future work.
 
 ## 🔒 Privacy
 
-SlackSave is designed to keep the calculator simple and private.
+- Calculator inputs remain in browser state.
+- Calculator values are not currently written to a database.
+- No financial data is sent to an external calculation API.
+- No account is required to use the calculator.
+- Supabase is only used when authentication is configured.
 
-- No user account is required.
-- No financial data is submitted to an API.
-- No database is used.
-- Calculations happen in the browser.
-- Income, expenses, and goals are held in local application state.
-
-Calculator inputs currently live in local application state. Authentication sessions persist through Supabase; saving calculator plans to the user's account is a next-stage feature.
+Future features that store user data must include appropriate access controls and database security policies.
 
 ## 🎨 Design
 
-SlackSave uses a dark, minimal interface with:
+SlackSave uses a dark financial-dashboard aesthetic with:
 
-- Tailwind CSS utility classes
-- Responsive layouts
+- Deep green / jalapeño-inspired branding
+- Lime savings accents
+- Orange secondary branding
 - High-contrast financial figures
-- Lime accent colour for important savings information
-- Mobile-first responsive behaviour
+- Rounded cards
+- Responsive Tailwind layouts
+- Subtle motion and hover interactions
+- Reduced-motion support
 
-The design intentionally keeps the calculator focused on the most important question:
+The product goal is to make one question immediately clear:
 
 > **How much are you actually keeping?**
 
@@ -234,101 +263,96 @@ The design intentionally keeps the calculator focused on the most important ques
 | --- | --- |
 | `npm run dev` | Start the Vite development server |
 | `npm run build` | Type-check and create a production build |
-| `npm run preview` | Preview the production build locally |
+| `npm run preview` | Preview the production build |
 
 ### Adding a currency
 
-Currencies are defined in `src/App.tsx`.
+Currencies are currently defined in `src/App.tsx`.
 
-Add a new entry to the `currencies` array:
+Add an entry to the `currencies` array:
 
 ```ts
 {
   code: "CAD",
-  symbol: "$",
-  name: "Canadian dollar"
+  symbol: "CA$",
+  name: "Canadian Dollar",
+  flag: "🇨🇦"
 }
 ```
 
-The formatter will automatically use the currency code through `Intl.NumberFormat`.
+The formatter uses the currency code with `Intl.NumberFormat`.
 
-### Adding new calculator features
+### Future code organisation
 
-Calculator values are derived in the `useMemo` block in `src/App.tsx`.
-
-For larger future features, consider separating the calculator logic into dedicated modules, for example:
+As SlackSave grows, calculator logic and UI can be separated into:
 
 ```text
 src/
 ├── components/
 ├── hooks/
+├── i18n/
 ├── lib/
 ├── types/
 └── App.tsx
 ```
 
+This will be particularly useful when multilingual support and AI-assisted input are added.
+
 ## 🌐 Deployment
 
-SlackSave is a static frontend application and can be deployed to services such as:
+SlackSave produces a static Vite build and can be deployed to Netlify, Vercel, Cloudflare Pages or another static hosting provider.
 
-- Vercel
-- Netlify
-- Cloudflare Pages
-- GitHub Pages
-- Any static hosting provider that supports a Vite build
+### Netlify
 
-The production command is:
+Recommended settings:
 
-```bash
-npm run build
+```text
+Build command: npm run build
+Publish directory: dist
 ```
 
-Deploy the resulting `dist/` directory according to your hosting provider's instructions.
+For client-side routing, configure the host to serve `index.html` as the fallback for application routes.
 
-## 🔮 Roadmap
+No backend server is required for the calculator.
 
-Potential future improvements include:
+## 🗺️ Roadmap
 
-- Persistent savings plans
-- LocalStorage support
-- Multiple savings goals
-- Expense categories
-- Monthly history and charts
-- Custom currency support
-- Currency exchange-rate conversion
-- Export to CSV/PDF
-- Budget vs. actual tracking
-- Dark/light theme selection
-- PWA/offline support
-- Automated savings recommendations
+### Planned
+
+- 💬 **AI natural-language savings input** — Let users describe income and expenses conversationally, extract structured data, confirm it, then save it to their account.
+- 🌍 **Multilingual support** — English, Arabic, French, Norwegian, Finnish, Swedish, Danish and German.
+- 💾 **Persistent savings plans** — Save user data to Supabase after the database architecture is ready.
+- 📊 **Savings history and charts**
+- 🧾 **Expense categories**
+- 🎯 **Multiple savings goals**
+- 💱 **Live exchange-rate conversion**
+- 📤 **CSV/PDF export**
+- 📈 **Budget vs. actual tracking**
+- 🤖 **Automated savings recommendations**
+
+### GitHub issues
+
+- **#1 — AI chat for natural-language savings input**
+- **#2 — Multilingual language support**
+
+The GitHub issues are the source of truth for detailed acceptance criteria and implementation planning.
 
 ## 🤝 Contributing
 
-Contributions are welcome.
-
 1. Fork the repository.
 2. Create a feature branch:
-
-```bash
-git checkout -b feature/my-feature
-```
-
+   ```bash
+   git checkout -b feature/my-feature
+   ```
 3. Make your changes.
-4. Verify the production build:
+4. Run:
+   ```bash
+   npm run build
+   ```
+5. Commit and push your branch.
+6. Open a pull request.
 
-```bash
-npm run build
-```
-
-5. Commit your changes:
-
-```bash
-git commit -m "Add my feature"
-```
-
-6. Push the branch and open a pull request.
-
-Please keep changes focused and maintain the existing TypeScript and Tailwind conventions.
+Keep changes focused and follow the existing TypeScript and Tailwind conventions.
 
 ## 📄 License
 
@@ -342,4 +366,4 @@ GitHub: https://github.com/heshamelmasry77
 
 ---
 
-Built with React, TypeScript, Vite, and Tailwind CSS.
+Built with React, TypeScript, Vite and Tailwind CSS.
