@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AccountButton } from "./features/auth/AccountButton";
 import { CurrencyPicker } from "./features/calculator/CurrencyPicker";
 import { SavingsCalculator } from "./features/calculator/SavingsCalculator";
 import { findCurrency } from "./features/calculator/currencies";
@@ -22,6 +23,7 @@ function App() {
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
             {canInstall && <button onClick={() => void install()} className="rounded-xl border border-lime-300/30 bg-lime-300/10 px-4 py-3 text-sm font-bold text-lime-300">Install app</button>}
+            <AccountButton />
             <CurrencyPicker value={currency} onChange={setCurrencyCode} />
           </div>
         </header>

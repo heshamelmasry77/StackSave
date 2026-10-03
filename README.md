@@ -27,7 +27,8 @@ The calculator runs locally in the browser. The Express backend is in place so a
 one Node.js process, one URL
 │
 ├── Express 5
-│   ├── /api/*  JSON API (health today; auth + data next)
+│   ├── /api/auth/*  Better Auth (Google, magic link)
+│   ├── /api/*  JSON API
 │   └── /*      React app
 │               dev:  Vite middleware + HMR
 │               prod: static dist/client + SPA fallback
@@ -54,6 +55,9 @@ one Node.js process, one URL
 | Zod | Environment validation |
 | esbuild, tsx | Server bundle, dev runner |
 | Vitest | Unit and API tests |
+| Better Auth | Passwordless auth (Google, magic link) |
+| PostgreSQL + Drizzle ORM | Database and migrations |
+| Nodemailer | Magic-link email over SMTP |
 | Railway | Hosting |
 
 ## 📁 Project Structure
@@ -68,16 +72,21 @@ StackSave/
 │       ├── main.tsx
 │       ├── index.css
 │       └── features/
+│           ├── auth/        # sign-in dialog, account button
 │           ├── calculator/  # currencies, CurrencyPicker, SavingsCalculator
 │           └── pwa/         # useInstallPrompt
 ├── server/
-│   └── src/
-│       ├── index.ts         # HTTP server bootstrap + graceful shutdown
-│       ├── app.ts           # Express app and /api router
-│       ├── frontend.ts      # Vite middleware (dev) / static files (prod)
-│       ├── env.ts           # validated environment variables
-│       ├── routes/          # one router per API area
-│       └── middleware/      # errors, 404s
+│   ├── src/
+│   │   ├── index.ts         # HTTP server bootstrap + graceful shutdown
+│   │   ├── app.ts           # Express app and /api router
+│   │   ├── frontend.ts      # Vite middleware (dev) / static files (prod)
+│   │   ├── env.ts           # validated environment variables
+│   │   ├── auth/            # Better Auth config, requireSession
+│   │   ├── db/              # Drizzle schema, client, migrator
+│   │   ├── mail/            # mailer + email templates
+│   │   ├── routes/          # one router per API area
+│   │   └── middleware/      # errors, 404s
+│   └── drizzle/             # generated SQL migrations
 ├── shared/                  # code shared by client and server (savings maths)
 ├── railway.json             # Railway build/deploy config
 ├── vite.config.ts
@@ -89,20 +98,22 @@ Client code imports shared code as `@shared/...`.
 
 ## 🚀 Getting Started
 
-Requires Node.js 24+.
+Requires Node.js 24+ and Docker (for the local Postgres and mail inbox).
 
 ```bash
 git clone https://github.com/heshamelmasry77/StackSave.git
 cd StackSave
 npm install
-npm run dev          # http://localhost:3000
+npm run services:up   # Postgres on :54329, Mailpit inbox on http://localhost:8026
+npm run db:migrate
+npm run dev           # http://localhost:3000
 ```
 
 Run the production build locally:
 
 ```bash
 npm run build
-npm start            # http://localhost:3000
+npm start             # needs the production env vars below
 ```
 
 ### Scripts
@@ -110,20 +121,28 @@ npm start            # http://localhost:3000
 | Command | Description |
 | --- | --- |
 | `npm run dev` | Express + Vite with hot reload on one port (`PORT`, default 3000) |
-| `npm run build` | Build the client and bundle the server into `dist/` |
+| `npm run build` | Build the client and bundle the server (and migrator) into `dist/` |
 | `npm start` | Run the production build |
 | `npm run typecheck` | Type-check client, server and config |
-| `npm test` | Run the Vitest suite |
-| `npm run check` | Typecheck + tests + build (run before opening a PR) |
+| `npm test` | Run the Vitest suite (`RUN_DB_TESTS=1` also runs the database tests) |
+| `npm run check` | Typecheck + tests + build (CI runs this on every PR) |
+| `npm run services:up` / `services:down` | Start / stop local Postgres + Mailpit |
+| `npm run db:generate` | Create a migration after editing `server/src/db/schema.ts` |
+| `npm run db:migrate` | Apply migrations (Railway runs this before every deploy) |
+| `npm run db:studio` | Browse the database |
 
 ### Environment variables
 
-See `.env.example`. Variables are validated at startup in `server/src/env.ts`.
+See `.env.example`. They are validated at startup in `server/src/env.ts`. In development every variable has a working default.
 
-| Variable | Default | Notes |
+| Variable | Production | Notes |
 | --- | --- | --- |
-| `PORT` | `3000` | Set automatically by Railway |
-| `NODE_ENV` | `development` | `npm start` sets `production` |
+| `DATABASE_URL` | required | Railway Postgres reference variable |
+| `BETTER_AUTH_SECRET` | required | `openssl rand -base64 32` |
+| `APP_URL` | optional | Public URL; defaults to Railway's generated domain |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Enables Google sign-in |
+| `SMTP_URL` / `MAIL_FROM` | optional | Enables magic links in production |
+| `PORT` | set by Railway | Default 3000 |
 
 ## 💰 Calculator Logic
 
@@ -206,16 +225,33 @@ The PWA configuration lives in `vite.config.ts`. The service worker never serves
 
 ## 🔐 Authentication
 
-Not enabled yet. The plan is to run authentication inside this Express app with [Better Auth](https://www.better-auth.com/) and a Postgres database, so user accounts stay in our own database:
+Passwordless only. There are no passwords anywhere.
 
-- Google sign-in
-- Passkeys (fingerprint / Face ID) for the installed PWA
-- Email magic link as a fallback
+- **Google sign-in**
+- **Magic link**: enter your email and get a single-use sign-in link (expires in 15 minutes). First use creates the account.
+- Fingerprint / Face ID (passkeys) is planned: [#4](https://github.com/heshamelmasry77/StackSave/issues/4).
+
+It runs inside the Express app with [Better Auth](https://www.better-auth.com/). Users and sessions live in our own Postgres. Endpoints are under `/api/auth/*`; sessions are an HTTP-only cookie (30 days).
+
+| Piece | Where |
+| --- | --- |
+| Auth config | `server/src/auth/auth.ts` |
+| Protect an API route | `requireSession(auth)` in `server/src/auth/requireSession.ts` (see `routes/me.ts`) |
+| Database schema | `server/src/db/schema.ts` → migrations in `server/drizzle/` |
+| Email sending | `server/src/mail/` (SMTP via `SMTP_URL`) |
+| UI | `client/src/features/auth/` |
+
+Each sign-in method switches on only when its credentials are set (`GET /api/config` tells the client). In development magic links work without any email setup: the link is printed in the server console.
+
+### Google sign-in setup
+1. Google Cloud Console → APIs & Services → Credentials → **Create OAuth client ID** → *Web application*.
+2. Authorised JavaScript origin: `https://<your-domain>`. Authorised redirect URI: `https://<your-domain>/api/auth/callback/google`. Add the `http://localhost:3000` equivalents for local dev.
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
 
 ## 🔒 Privacy
 
 - Calculator inputs remain in browser state.
-- Calculator values are not currently written to a database.
+- Calculator values are not currently written to a database. Signing in stores only your email, name and (for Google) profile picture.
 - No financial data is sent to an external calculation API.
 - No account is required to use the calculator.
 
@@ -258,6 +294,7 @@ SlackSave deploys to [Railway](https://railway.com) as a single service. `railwa
 
 ```text
 Build:        npm run build   (Railpack, Node 24 from .node-version)
+Pre-deploy:   node dist/server/migrate.js   (database migrations)
 Start:        npm start
 Health check: GET /api/health
 ```
@@ -270,7 +307,7 @@ Railway provides `PORT` and HTTPS. Pushes to `main` deploy automatically once th
 
 - 💬 **AI natural-language savings input** — Let users describe income and expenses conversationally, extract structured data, confirm it, then save it to their account.
 - 🌍 **Multilingual support** — English, Arabic, French, Norwegian, Finnish, Swedish, Danish and German.
-- 🔐 **Accounts** — Google sign-in and passkeys via Better Auth, stored in Railway Postgres.
+- 🔐 **Passkeys** — fingerprint / Face ID login (#4).
 - 💾 **Persistent savings plans** — Save savings entries per user in Postgres.
 - 📊 **Savings history and charts**
 - 🧾 **Expense categories**

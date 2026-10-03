@@ -1,0 +1,28 @@
+# Local development services. Start with: npm run services:up
+name: stacksave
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: stacksave
+      POSTGRES_PASSWORD: stacksave
+      POSTGRES_DB: stacksave
+    ports:
+      - "54329:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stacksave"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # Catches outgoing email (magic links). Inbox UI: http://localhost:8026
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1026:1025"
+      - "8026:8025"
+
+volumes:
+  postgres-data:
