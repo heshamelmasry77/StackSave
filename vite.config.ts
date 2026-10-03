@@ -1,9 +1,15 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
+
 export default defineConfig({
+  root: r("./client"),
+  resolve: { alias: { "@shared": r("./shared") } },
+  build: { outDir: r("./dist/client"), emptyOutDir: true },
   plugins: [
     react(),
     tailwindcss(),
@@ -21,7 +27,12 @@ export default defineConfig({
         scope: "/",
         icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any maskable" }]
       },
-      workbox: { navigateFallback: "/index.html", globPatterns: ["**/*.{js,css,html,svg,ico,png,webp}"] }
+      workbox: {
+        navigateFallback: "/index.html",
+        // API responses must always come from the server, never the app-shell cache.
+        navigateFallbackDenylist: [/^\/api\//],
+        globPatterns: ["**/*.{js,css,html,svg,ico,png,webp}"]
+      }
     })
   ]
 });

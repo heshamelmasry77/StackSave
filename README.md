@@ -1,10 +1,10 @@
 # SlackSave
 
-> A fast, privacy-friendly savings calculator built with React, TypeScript, Vite, and Tailwind CSS.
+> A fast, privacy-friendly savings calculator. One Node.js app serves both the React frontend and the Express API.
 
 SlackSave helps you understand how much you save each month and year, measure your savings rate, and estimate how long it will take to reach a savings goal.
 
-The calculator runs locally in the browser. Authentication/PWA infrastructure is present, while persistent savings data and database integration are planned for a later stage.
+The calculator runs locally in the browser. The Express backend is in place so accounts (Google sign-in, passkeys) and saved savings data can be added without a third-party backend service.
 
 ## ✨ Features
 
@@ -18,111 +18,112 @@ The calculator runs locally in the browser. Authentication/PWA infrastructure is
 - **Responsive UI** — Mobile, tablet and desktop layouts.
 - **Animated interface** — Entrance animations, hover states, progress animation and subtle motion.
 - **PWA-ready** — Installable web app with manifest, service worker and application-shell caching.
-- **Optional authentication UI** — Supabase Auth scaffolding for Google and passwordless email sign-in.
+- **Single deployable app** — Express serves the API under `/api` and the built frontend from the same origin.
 - **Privacy-first calculator** — Financial inputs are processed locally and are not currently saved to a database.
 
-## 🧱 Current Architecture
-
-SlackSave is currently a client-side React application.
+## 🧱 Architecture
 
 ```text
-Browser
-  │
-  ├── React + TypeScript
-  ├── Tailwind CSS
-  ├── Local calculator state
-  ├── Intl.NumberFormat
-  └── PWA service worker
-          │
-          └── Optional Supabase Auth
+one Node.js process, one URL
+│
+├── Express 5
+│   ├── /api/*  JSON API (health today; auth + data next)
+│   └── /*      React app
+│               dev:  Vite middleware + HMR
+│               prod: static dist/client + SPA fallback
+│
+└── shared/     pure TypeScript used by both sides
 ```
 
-There is currently **no persistent savings database** and no exchange-rate API.
+- **Same origin for frontend and API** — no CORS, and cookie-based sessions will just work.
+- **Development** — `npm run dev` starts Express, which runs Vite inside it as middleware. One port, hot reload included.
+- **Production** — `npm run build` builds the client to `dist/client` and bundles the server to `dist/server/index.js`; `npm start` runs it.
+- **Security headers** — Helmet (strict Content-Security-Policy in production), gzip compression, `trust proxy` for hosting behind a TLS proxy.
+- **Caching** — fingerprinted `/assets/*` are cached for a year; `index.html`, `sw.js` and the manifest always revalidate so installed PWAs pick up new releases.
 
 ## 🛠 Tech Stack
 
 | Technology | Purpose |
 | --- | --- |
-| React 19 | User interface |
-| TypeScript | Type safety |
-| Vite 7 | Development server and production build |
-| Tailwind CSS 4 | Styling and responsive UI |
-| @tailwindcss/vite | Tailwind/Vite integration |
-| vite-plugin-pwa | PWA manifest and service worker |
-| Supabase JS | Authentication scaffolding |
-| Intl.NumberFormat | Locale-aware currency formatting |
+| React 19 + TypeScript | User interface |
+| Vite 8 | Frontend dev server and build |
+| Tailwind CSS 4 | Styling |
+| vite-plugin-pwa | Manifest and service worker |
+| Express 5 | HTTP server and API |
+| Helmet, compression | Security headers, gzip |
+| Zod | Environment validation |
+| esbuild, tsx | Server bundle, dev runner |
+| Vitest | Unit and API tests |
+| Railway | Hosting |
 
 ## 📁 Project Structure
 
 ```text
 StackSave/
-├── public/
-│   ├── favicon.svg
-│   ├── icon.svg
-│   └── site.webmanifest
-├── src/
-│   ├── lib/
-│   │   └── supabase.ts
-│   ├── App.tsx
-│   ├── index.css
-│   └── main.tsx
-├── .env.example
-├── .gitignore
-├── index.html
-├── package.json
-├── tsconfig.json
-├── tsconfig.app.json
-├── tsconfig.node.json
+├── client/                  # React app (Vite root)
+│   ├── index.html
+│   ├── public/              # favicon, PWA icon
+│   └── src/
+│       ├── App.tsx          # page layout
+│       ├── main.tsx
+│       ├── index.css
+│       └── features/
+│           ├── calculator/  # currencies, CurrencyPicker, SavingsCalculator
+│           └── pwa/         # useInstallPrompt
+├── server/
+│   └── src/
+│       ├── index.ts         # HTTP server bootstrap + graceful shutdown
+│       ├── app.ts           # Express app and /api router
+│       ├── frontend.ts      # Vite middleware (dev) / static files (prod)
+│       ├── env.ts           # validated environment variables
+│       ├── routes/          # one router per API area
+│       └── middleware/      # errors, 404s
+├── shared/                  # code shared by client and server (savings maths)
+├── railway.json             # Railway build/deploy config
 ├── vite.config.ts
-├── LICENSE
-└── README.md
+├── vitest.config.ts
+└── tsconfig.{client,server,node}.json
 ```
+
+Client code imports shared code as `@shared/...`.
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-- Node.js 20+
-- npm 10+
-- Git
-
-Check your versions:
-
-```bash
-node --version
-npm --version
-git --version
-```
-
-### Installation
+Requires Node.js 24+.
 
 ```bash
 git clone https://github.com/heshamelmasry77/StackSave.git
 cd StackSave
 npm install
+npm run dev          # http://localhost:3000
 ```
 
-### Development
-
-```bash
-npm run dev
-```
-
-Open the local URL shown by Vite, normally `http://localhost:5173`.
-
-### Production build
+Run the production build locally:
 
 ```bash
 npm run build
+npm start            # http://localhost:3000
 ```
 
-This runs TypeScript checks and creates the production build in `dist/`.
+### Scripts
 
-Preview it locally:
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Express + Vite with hot reload on one port (`PORT`, default 3000) |
+| `npm run build` | Build the client and bundle the server into `dist/` |
+| `npm start` | Run the production build |
+| `npm run typecheck` | Type-check client, server and config |
+| `npm test` | Run the Vitest suite |
+| `npm run check` | Typecheck + tests + build (run before opening a PR) |
 
-```bash
-npm run preview
-```
+### Environment variables
+
+See `.env.example`. Variables are validated at startup in `server/src/env.ts`.
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `PORT` | `3000` | Set automatically by Railway |
+| `NODE_ENV` | `development` | `npm start` sets `production` |
 
 ## 💰 Calculator Logic
 
@@ -201,32 +202,15 @@ Current PWA capabilities:
 - Branded favicon and PWA icon
 - In-app install prompt when supported by the browser
 
-The PWA configuration lives in `vite.config.ts`.
+The PWA configuration lives in `vite.config.ts`. The service worker never serves `/api/*` requests from its cache.
 
 ## 🔐 Authentication
 
-Supabase Auth is currently **prepared but optional**.
+Not enabled yet. The plan is to run authentication inside this Express app with [Better Auth](https://www.better-auth.com/) and a Postgres database, so user accounts stay in our own database:
 
-When Supabase environment variables are configured, the UI supports:
-
-- Google OAuth
-- Passwordless email magic links
-- Session restoration
-- Automatic auth state updates
-- Sign-out
-
-Create a `.env.local` file:
-
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-
-> Never commit `.env.local`, service-role keys, or other secrets. Only a public Supabase client key intended for frontend use should be exposed to the browser.
-
-### Current limitation
-
-Authentication does **not** currently save calculator data to Supabase. Persistent user savings plans and database integration are future work.
+- Google sign-in
+- Passkeys (fingerprint / Face ID) for the installed PWA
+- Email magic link as a fallback
 
 ## 🔒 Privacy
 
@@ -234,9 +218,8 @@ Authentication does **not** currently save calculator data to Supabase. Persiste
 - Calculator values are not currently written to a database.
 - No financial data is sent to an external calculation API.
 - No account is required to use the calculator.
-- Supabase is only used when authentication is configured.
 
-Future features that store user data must include appropriate access controls and database security policies.
+Future features that store user data must include appropriate access controls.
 
 ## 🎨 Design
 
@@ -257,63 +240,29 @@ The product goal is to make one question immediately clear:
 
 ## 🧑‍💻 Development
 
-### Available scripts
+### Adding an API route
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start the Vite development server |
-| `npm run build` | Type-check and create a production build |
-| `npm run preview` | Preview the production build |
+1. Create a router in `server/src/routes/`, e.g. `goals.ts`.
+2. Mount it in `server/src/app.ts`: `api.use("/goals", goalsRouter);`
+3. Add a test next to it (see `server/src/app.test.ts`).
+
+Unknown `/api/*` paths return a JSON 404, never the React app.
 
 ### Adding a currency
 
-Currencies are currently defined in `src/App.tsx`.
-
-Add an entry to the `currencies` array:
-
-```ts
-{
-  code: "CAD",
-  symbol: "CA$",
-  name: "Canadian Dollar",
-  flag: "🇨🇦"
-}
-```
-
-The formatter uses the currency code with `Intl.NumberFormat`.
-
-### Future code organisation
-
-As SlackSave grows, calculator logic and UI can be separated into:
-
-```text
-src/
-├── components/
-├── hooks/
-├── i18n/
-├── lib/
-├── types/
-└── App.tsx
-```
-
-This will be particularly useful when multilingual support and AI-assisted input are added.
+Currencies live in `client/src/features/calculator/currencies.ts`. Add an entry to the `currencies` array; formatting uses the code with `Intl.NumberFormat`.
 
 ## 🌐 Deployment
 
-SlackSave produces a static Vite build and can be deployed to Netlify, Vercel, Cloudflare Pages or another static hosting provider.
-
-### Netlify
-
-Recommended settings:
+SlackSave deploys to [Railway](https://railway.com) as a single service. `railway.json` configures it:
 
 ```text
-Build command: npm run build
-Publish directory: dist
+Build:        npm run build   (Railpack, Node 24 from .node-version)
+Start:        npm start
+Health check: GET /api/health
 ```
 
-For client-side routing, configure the host to serve `index.html` as the fallback for application routes.
-
-No backend server is required for the calculator.
+Railway provides `PORT` and HTTPS. Pushes to `main` deploy automatically once the service is connected to the GitHub repo.
 
 ## 🗺️ Roadmap
 
@@ -321,7 +270,8 @@ No backend server is required for the calculator.
 
 - 💬 **AI natural-language savings input** — Let users describe income and expenses conversationally, extract structured data, confirm it, then save it to their account.
 - 🌍 **Multilingual support** — English, Arabic, French, Norwegian, Finnish, Swedish, Danish and German.
-- 💾 **Persistent savings plans** — Save user data to Supabase after the database architecture is ready.
+- 🔐 **Accounts** — Google sign-in and passkeys via Better Auth, stored in Railway Postgres.
+- 💾 **Persistent savings plans** — Save savings entries per user in Postgres.
 - 📊 **Savings history and charts**
 - 🧾 **Expense categories**
 - 🎯 **Multiple savings goals**
@@ -347,7 +297,7 @@ The GitHub issues are the source of truth for detailed acceptance criteria and i
 3. Make your changes.
 4. Run:
    ```bash
-   npm run build
+   npm run check
    ```
 5. Commit and push your branch.
 6. Open a pull request.
@@ -366,4 +316,4 @@ GitHub: https://github.com/heshamelmasry77
 
 ---
 
-Built with React, TypeScript, Vite and Tailwind CSS.
+Built with React, TypeScript, Vite, Tailwind CSS and Express.
