@@ -289,20 +289,11 @@ The GitHub issues are the source of truth for detailed acceptance criteria and i
 
 ## 🤝 Contributing
 
-1. Fork the repository.
-2. Create a feature branch:
-   ```bash
-   git checkout -b feature/my-feature
-   ```
-3. Make your changes.
-4. Run:
-   ```bash
-   npm run check
-   ```
-5. Commit and push your branch.
-6. Open a pull request.
+See [`AGENTS.md`](AGENTS.md) for the working rules. In short:
 
-Keep changes focused and follow the existing TypeScript and Tailwind conventions.
+1. Branch from the latest `main` (`feature/…`, `fix/…`, `chore/…`).
+2. Run `npm run check`.
+3. Open a PR into `main`. **Merging a PR into `main` is a release**: Railway deploys it automatically.
 
 ## 📄 License
 
