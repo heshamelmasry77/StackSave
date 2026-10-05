@@ -21,13 +21,14 @@ export function cleanNote(note: string | null | undefined): string | null {
   return cleaned ? cleaned : null;
 }
 
-const DEFAULT_NOTE_SUGGESTIONS = ["Cash", "Bank account", "Safe"];
-
-/** Up to `limit` quick picks: the person's own recent notes first, then sensible defaults. */
+/**
+ * Up to `limit` quick picks from the person's own recent notes. No presets: suggesting answers
+ * ("Cash", "Bank") would steer what people write; their own notes just save retyping.
+ */
 export function noteSuggestions(entries: SavingEntry[], limit = 3): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const note of [...sortNewestFirst(entries).map((e) => cleanNote(e.note)), ...DEFAULT_NOTE_SUGGESTIONS]) {
+  for (const note of sortNewestFirst(entries).map((e) => cleanNote(e.note))) {
     if (!note || seen.has(note.toLowerCase())) continue;
     seen.add(note.toLowerCase());
     out.push(note);

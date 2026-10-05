@@ -49,13 +49,16 @@ describe("cleanNote", () => {
 });
 
 describe("noteSuggestions", () => {
-  it("offers defaults when there are no notes yet", () => expect(noteSuggestions([])).toEqual(["Cash", "Bank account", "Safe"]));
+  it("offers nothing until the person has written notes", () => {
+    expect(noteSuggestions([])).toEqual([]);
+    expect(noteSuggestions([e(1, "EUR", "2026-10-01T10:00:00Z")])).toEqual([]);
+  });
   it("puts recent notes first, without duplicates (case-insensitive)", () => {
     const entries = [
       { ...e(1, "EUR", "2026-10-01T10:00:00Z"), note: "cash" },
       { ...e(1, "EUR", "2026-10-03T10:00:00Z"), note: "Revolut" },
       { ...e(1, "EUR", "2026-10-02T10:00:00Z"), note: null },
     ];
-    expect(noteSuggestions(entries)).toEqual(["Revolut", "cash", "Bank account"]);
+    expect(noteSuggestions(entries)).toEqual(["Revolut", "cash"]);
   });
 });
