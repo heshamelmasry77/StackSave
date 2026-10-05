@@ -3,8 +3,14 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.client.tsbuildinfo",
     "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "vite/client"
+    ],
     "skipLibCheck": true,
     "strict": true,
     "module": "ESNext",
@@ -14,7 +20,17 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "paths": { "@shared/*": ["./shared/*"] }
+    "paths": {
+      "@/*": [
+        "./client/src/*"
+      ],
+      "@shared/*": [
+        "./shared/*"
+      ]
+    }
   },
-  "include": ["client/src", "shared"]
+  "include": [
+    "client/src",
+    "shared"
+  ]
 }
