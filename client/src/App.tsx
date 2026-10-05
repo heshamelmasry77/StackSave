@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { CircleAlertIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney, type CurrencyCode } from "@shared/currencies";
-import { totalsByCurrency, usedCurrencies, type SavingEntry } from "@shared/savings";
+import { noteSuggestions, totalsByCurrency, usedCurrencies, type SavingEntry } from "@shared/savings";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { AccountMenu } from "@/features/auth/AccountMenu";
@@ -13,6 +13,7 @@ import { useInstallPrompt } from "@/features/pwa/useInstallPrompt";
 import { BackupNudge } from "@/features/savings/BackupNudge";
 import { CurrencySheet } from "@/features/savings/CurrencySheet";
 import { History } from "@/features/savings/History";
+import { NoteSheet } from "@/features/savings/NoteSheet";
 import { SaveCard } from "@/features/savings/SaveCard";
 import { TotalHero } from "@/features/savings/TotalHero";
 import { usePreferredCurrency } from "@/features/savings/usePreferredCurrency";
@@ -34,6 +35,7 @@ function App() {
   const [urlError] = useState(takeAuthErrorFromUrl);
   const [signInOpen, setSignInOpen] = useState(urlError !== null);
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [editing, setEditing] = useState<SavingEntry | null>(null);
   const [nudgeDismissed, setNudgeDismissed] = useState(() => readJson(NUDGE_DISMISSED_KEY) === true);
 
   const canSignIn = authConfig !== null && (authConfig.google || authConfig.magicLink);
@@ -55,6 +57,8 @@ function App() {
   };
   const closeSignIn = useCallback(() => setSignInOpen(false), []);
   const closeCurrencies = useCallback(() => setCurrencyOpen(false), []);
+  const closeEditor = useCallback(() => setEditing(null), []);
+  const suggestions = noteSuggestions(savings.entries);
 
   const latest = savings.entries[0];
   const carried = onDevice
@@ -97,8 +101,9 @@ function App() {
         <SaveCard
           currency={currency}
           disabled={savings.mode === "loading"}
+          noteSuggestions={suggestions}
           onOpenCurrencies={() => setCurrencyOpen(true)}
-          onSave={(amount) => savings.add(amount, currency)}
+          onSave={(amount, note) => savings.add(amount, currency, note)}
         />
 
         {savings.error && (
@@ -112,10 +117,11 @@ function App() {
           <BackupNudge lastSaved={formatMoney(latest.amount, latest.currency)} onKeepSafe={() => setSignInOpen(true)} onDismiss={dismissNudge} />
         )}
 
-        <History entries={savings.entries} onRemove={removeEntry} />
+        <History entries={savings.entries} onEdit={setEditing} onRemove={removeEntry} />
       </main>
 
       {currencyOpen && <CurrencySheet value={currency} used={usedCurrencies(savings.entries)} onPick={setCurrency} onClose={closeCurrencies} />}
+      {editing && <NoteSheet entry={editing} suggestions={suggestions} onSave={(note) => void savings.setNote(editing, note)} onClose={closeEditor} />}
       {signInOpen && authConfig && <SignInSheet config={authConfig} initialError={urlError} carried={carried} onClose={closeSignIn} />}
       <Toaster position="bottom-center" />
     </div>

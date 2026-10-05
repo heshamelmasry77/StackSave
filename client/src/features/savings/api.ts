@@ -29,4 +29,7 @@ export async function importSavings(entries: SavingEntry[]) {
   return result;
 }
 
+export const patchSavingNote = (id: string, note: string | null) =>
+  request<{ entry: SavingEntry }>(`/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ note }) }).then((r) => r.entry);
+
 export const deleteSaving = (id: string) => request<void>(`/${encodeURIComponent(id)}`, { method: "DELETE" });

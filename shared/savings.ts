@@ -8,9 +8,33 @@ export type SavingEntry = {
   currency: CurrencyCode;
   /** ISO 8601 timestamp. */
   savedAt: string;
+  /** Where the money is or what it's for, e.g. "In my safe". Null when there's none. */
+  note?: string | null;
 };
 
 export const MAX_AMOUNT = 1_000_000_000;
+export const MAX_NOTE_LENGTH = 200;
+
+/** Collapses whitespace and trims; an empty note becomes null. */
+export function cleanNote(note: string | null | undefined): string | null {
+  const cleaned = (note ?? "").replace(/\s+/g, " ").trim();
+  return cleaned ? cleaned : null;
+}
+
+const DEFAULT_NOTE_SUGGESTIONS = ["Cash", "Bank account", "Safe"];
+
+/** Up to `limit` quick picks: the person's own recent notes first, then sensible defaults. */
+export function noteSuggestions(entries: SavingEntry[], limit = 3): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const note of [...sortNewestFirst(entries).map((e) => cleanNote(e.note)), ...DEFAULT_NOTE_SUGGESTIONS]) {
+    if (!note || seen.has(note.toLowerCase())) continue;
+    seen.add(note.toLowerCase());
+    out.push(note);
+    if (out.length === limit) break;
+  }
+  return out;
+}
 
 /** Accepts a partially typed money amount: digits with up to two decimals. */
 export const isMoneyDraft = (value: string) => /^\d*(\.\d{0,2})?$/.test(value);

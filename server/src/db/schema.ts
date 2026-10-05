@@ -83,6 +83,8 @@ export const saving = pgTable(
     amount: numeric("amount", { precision: 18, scale: 4, mode: "number" }).notNull(),
     currency: varchar("currency", { length: 3 }).notNull(),
     savedAt: timestamp("saved_at", { withTimezone: true }).notNull(),
+    // Free text such as "In my safe" or "Bank account". Null when there's none.
+    note: text("note"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("saving_user_saved_at_idx").on(t.userId, t.savedAt)],

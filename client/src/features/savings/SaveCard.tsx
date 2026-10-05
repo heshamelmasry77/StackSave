@@ -1,28 +1,36 @@
 import { useState, type FormEvent } from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, NotebookPenIcon } from "lucide-react";
 import { currencySymbol, type CurrencyCode } from "@shared/currencies";
-import { isMoneyDraft, parseAmount } from "@shared/savings";
+import { isMoneyDraft, MAX_NOTE_LENGTH, parseAmount } from "@shared/savings";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NoteSuggestions } from "./NoteSuggestions";
 
 type Props = {
   currency: CurrencyCode;
   disabled?: boolean;
+  /** Quick picks for the note field. */
+  noteSuggestions: string[];
   onOpenCurrencies: () => void;
-  onSave: (amount: number) => void;
+  onSave: (amount: number, note: string) => void;
 };
 
 const QUICK = [10, 50, 100];
 
-export function SaveCard({ currency, disabled, onOpenCurrencies, onSave }: Props) {
+export function SaveCard({ currency, disabled, noteSuggestions, onOpenCurrencies, onSave }: Props) {
   const [draft, setDraft] = useState("");
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [note, setNote] = useState("");
   const amount = parseAmount(draft);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (amount === null || disabled) return;
-    onSave(amount);
+    onSave(amount, note);
     setDraft("");
+    setNote("");
+    setNoteOpen(false);
   };
 
   return (
@@ -54,6 +62,20 @@ export function SaveCard({ currency, disabled, onOpenCurrencies, onSave }: Props
           </Button>
         ))}
       </div>
+      {noteOpen ? (
+        <div className="flex flex-col gap-2.5">
+          <Label htmlFor="save-note" className="text-sm font-semibold text-foreground/85">
+            Note <span className="font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Input id="save-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={MAX_NOTE_LENGTH} autoComplete="off" placeholder="Where is it? e.g. In my safe" className="bg-background" autoFocus />
+          <NoteSuggestions suggestions={noteSuggestions} current={note} onPick={setNote} />
+        </div>
+      ) : (
+        <Button type="button" variant="ghost" size="sm" onClick={() => setNoteOpen(true)} className="self-start text-muted-foreground hover:text-foreground">
+          <NotebookPenIcon />
+          Add a note
+        </Button>
+      )}
       <Button type="submit" size="lg" disabled={amount === null || disabled}>Save it</Button>
     </form>
   );

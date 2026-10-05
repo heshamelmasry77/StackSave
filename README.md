@@ -11,7 +11,8 @@ Type an amount, pick a currency, tap **Save it**. No account needed to start: sa
 - **Save in two taps**: amount, currency, **Save it**. Quick +10 / +50 / +100 buttons.
 - **Totals per currency**: the selected currency's total is shown large and the others as chips. Amounts are never converted.
 - **This month**: how much went aside in the selected currency this calendar month.
-- **History**: every save, newest first, with delete and **Undo**.
+- **Notes**: optionally say where the money is or what it's for ("In my safe", "Bank account", "Cash"), with quick picks from your recent notes. Tap a history entry to add, change or remove its note.
+- **History**: every save, newest first, with its note, delete and **Undo**.
 - **No account needed to start**: saves are kept on the device. After the first save, a card offers a free account ("Keep it safe"); dismissed, it becomes a small "Not backed up" badge.
 - **Moves into your account**: on sign-in, device saves are imported once (duplicates impossible: every save has a client-generated UUID), then cleared from the device.
 - **Passwordless sign-in**: Google or an emailed magic link.
@@ -151,11 +152,12 @@ All routes need a signed-in session and only ever touch that user's rows.
 | Route | What it does |
 | --- | --- |
 | `GET /api/savings` | The user's saves, newest first |
-| `POST /api/savings` | Add `{ id, amount, currency, savedAt }`. `id` is a client UUID; re-posting it is a no-op (safe retries, undo) |
+| `POST /api/savings` | Add `{ id, amount, currency, savedAt, note? }`. `id` is a client UUID; re-posting it is a no-op (safe retries, undo) |
 | `POST /api/savings/import` | Up to 500 device saves at once (the client batches); existing ids are skipped. Returns the full list |
+| `PATCH /api/savings/:id` | Change the note: `{ note }` (empty or null removes it) |
 | `DELETE /api/savings/:id` | Remove one save |
 
-Validation: amount > 0 and ≤ 1,000,000,000 with at most 4 decimals; a supported currency code; `savedAt` between 2020 and tomorrow. Amounts are stored as `numeric(18,4)`.
+Validation: amount > 0 and ≤ 1,000,000,000 with at most 4 decimals; a supported currency code; `savedAt` between 2020 and tomorrow; `note` is trimmed, whitespace collapsed, at most 200 characters. Amounts are stored as `numeric(18,4)`.
 
 ## 💱 Currency Support
 
