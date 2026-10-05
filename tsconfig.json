@@ -1,8 +1,24 @@
 {
   "files": [],
+  "compilerOptions": {
+    "paths": {
+      "@/*": [
+        "./client/src/*"
+      ],
+      "@shared/*": [
+        "./shared/*"
+      ]
+    }
+  },
   "references": [
-    { "path": "./tsconfig.client.json" },
-    { "path": "./tsconfig.server.json" },
-    { "path": "./tsconfig.node.json" }
+    {
+      "path": "./tsconfig.client.json"
+    },
+    {
+      "path": "./tsconfig.server.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
   ]
 }

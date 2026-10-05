@@ -8,7 +8,7 @@ const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
 export default defineConfig({
   root: r("./client"),
-  resolve: { alias: { "@shared": r("./shared") } },
+  resolve: { alias: { "@": r("./client/src"), "@shared": r("./shared") } },
   build: { outDir: r("./dist/client"), emptyOutDir: true },
   plugins: [
     react(),

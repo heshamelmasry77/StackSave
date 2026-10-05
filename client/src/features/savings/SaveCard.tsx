@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from "react";
+import { ChevronDownIcon } from "lucide-react";
 import { currencySymbol, type CurrencyCode } from "@shared/currencies";
 import { isMoneyDraft, parseAmount } from "@shared/savings";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 type Props = {
   currency: CurrencyCode;
@@ -23,11 +26,12 @@ export function SaveCard({ currency, disabled, onOpenCurrencies, onSave }: Props
   };
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3.5 rounded-3xl border border-zinc-800 bg-zinc-900 p-[18px]">
-      <label htmlFor="save-amount" className="text-sm font-semibold text-zinc-300">How much are you putting aside?</label>
+    <form onSubmit={submit} className="flex flex-col gap-3.5 rounded-3xl border bg-card p-[18px]">
+      <Label htmlFor="save-amount" className="text-sm font-semibold text-foreground/85">How much are you putting aside?</Label>
       <div className="flex gap-2.5">
-        <div className="flex h-[60px] min-w-0 flex-1 items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-950 px-3.5 transition focus-within:border-lime-300">
-          <span className="text-[22px] font-semibold text-zinc-500" aria-hidden="true">{currencySymbol(currency)}</span>
+        {/* Amount field with the currency symbol inside; the big type is the point of the screen. */}
+        <div className="flex h-[60px] min-w-0 flex-1 items-center gap-2 rounded-2xl border border-input bg-background px-3.5 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
+          <span className="text-[22px] font-semibold text-muted-foreground" aria-hidden="true">{currencySymbol(currency)}</span>
           <input
             id="save-amount"
             inputMode="decimal"
@@ -35,24 +39,22 @@ export function SaveCard({ currency, disabled, onOpenCurrencies, onSave }: Props
             placeholder="0"
             value={draft}
             onChange={(e) => isMoneyDraft(e.target.value) && setDraft(e.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-[28px] font-bold tabular-nums outline-none placeholder:text-zinc-600"
+            className="min-w-0 flex-1 bg-transparent text-[28px] font-bold tabular-nums outline-none placeholder:text-muted-foreground/60"
           />
         </div>
-        <button type="button" onClick={onOpenCurrencies} aria-label={`Currency: ${currency}. Change`} className="flex h-[60px] w-24 items-center justify-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-950 text-base font-bold transition hover:border-zinc-500">
+        <Button type="button" variant="outline" onClick={onOpenCurrencies} aria-label={`Currency: ${currency}. Change`} className="h-[60px] w-24 rounded-2xl bg-background text-base font-bold">
           {currency}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-        </button>
+          <ChevronDownIcon className="text-muted-foreground" />
+        </Button>
       </div>
       <div className="flex gap-2">
         {QUICK.map((q) => (
-          <button key={q} type="button" onClick={() => setDraft(String((Number(draft) || 0) + q))} className="h-11 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 text-[15px] font-semibold text-zinc-300 transition hover:border-zinc-600">
+          <Button key={q} type="button" variant="outline" onClick={() => setDraft(String((Number(draft) || 0) + q))} className="flex-1 bg-background">
             +{q}
-          </button>
+          </Button>
         ))}
       </div>
-      <button type="submit" disabled={amount === null || disabled} className="h-14 rounded-2xl bg-lime-300 text-[17px] font-extrabold text-zinc-950 transition hover:bg-lime-200 disabled:opacity-35 disabled:hover:bg-lime-300">
-        Save it
-      </button>
+      <Button type="submit" size="lg" disabled={amount === null || disabled}>Save it</Button>
     </form>
   );
 }

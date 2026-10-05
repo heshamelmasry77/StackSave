@@ -1,19 +1,81 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
+/* shadcn/ui components style dark mode with `dark:`; the app is dark-only and <html> carries .dark. */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * SlackSave design tokens. Components read these through the @theme mapping below
+ * (bg-primary, text-muted-foreground, border-border, rounded-xl, …). Change the brand here, not in components.
+ */
 :root {
-  font-family: "Geist Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color-scheme: dark;
+  --radius: 1rem;
+
+  --background: #09090b;          /* zinc-950 */
+  --foreground: #fafafa;
+  --card: #18181b;                /* zinc-900 */
+  --card-foreground: #fafafa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+  --primary: #bef264;             /* lime-300, the brand */
+  --primary-foreground: #09090b;
+  --secondary: #27272a;           /* zinc-800 */
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;    /* zinc-400: 7.8:1 on background */
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #f87171;
+  --border: #27272a;
+  --input: #3f3f46;               /* zinc-700 */
+  --ring: #bef264;
+
+  /* Brand extras */
+  --success: #a3e635;             /* lime-400: positive amounts */
+  --success-surface: #1a2e05;     /* lime-950 */
+  --success-border: #3f6212;      /* lime-800 */
+  --warning: #fde68a;             /* amber-200 */
+  --warning-surface: #451a03;     /* amber-950 */
+  --warning-border: #92400e;      /* amber-800 */
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  background: #09090b;
-  -webkit-tap-highlight-color: transparent;
-}
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-* { box-sizing: border-box; }
-input, select { font: inherit; }
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --animate-page-in: page-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-up: fade-up 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
 @keyframes page-in {
   from { opacity: 0; transform: translateY(10px); }
@@ -25,14 +87,17 @@ input, select { font: inherit; }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-page-in { animation: page-in 500ms cubic-bezier(.22,1,.36,1) both; }
-.animate-fade-up { animation: fade-up 400ms cubic-bezier(.22,1,.36,1) both; }
-.animate-sheet-up { animation: sheet-up 320ms cubic-bezier(.22,1,.36,1) both; }
-
-
-@keyframes sheet-up {
-  from { transform: translateY(24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply min-w-[320px] bg-background font-sans text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

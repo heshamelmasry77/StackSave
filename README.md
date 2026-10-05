@@ -47,6 +47,7 @@ one Node.js process, one URL
 | React 19 + TypeScript | User interface |
 | Vite 8 | Frontend dev server and build |
 | Tailwind CSS 4 | Styling |
+| shadcn/ui (Radix, vaul, cmdk, sonner) + lucide | Design system: components in `client/src/components/ui`, tokens in `client/src/index.css` |
 | vite-plugin-pwa | Manifest and service worker |
 | Express 5 | HTTP server and API |
 | Helmet, compression | Security headers, gzip |
@@ -67,6 +68,7 @@ StackSave/
 │   ├── public/              # favicon, PWA icon
 │   └── src/
 │       ├── App.tsx          # page layout
+│       ├── components/      # AppSheet + ui/ (shadcn/ui components)
 │       ├── main.tsx
 │       ├── index.css
 │       └── features/
