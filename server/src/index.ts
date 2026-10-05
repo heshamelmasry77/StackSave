@@ -7,7 +7,7 @@ import { mountFrontend } from "./frontend";
 import { createMailer } from "./mail/mailer";
 
 const auth = createAuth({ db, mailer: createMailer() });
-const app = createApp({ auth });
+const app = createApp({ auth, db });
 const server = createServer(app);
 const closeFrontend = await mountFrontend(app, server);
 

@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "tsx watch --clear-screen=false --include \"server/src/**\" server/src/index.ts",
+    "dev": "tsx watch --tsconfig tsconfig.server.json --clear-screen=false --include \"server/src/**\" --include \"shared/**\" server/src/index.ts",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "esbuild server/src/index.ts server/src/db/migrate.ts --bundle --platform=node --format=esm --target=node24 --packages=external --alias:@shared=./shared --outdir=dist/server --entry-names=[name]",
@@ -16,12 +16,13 @@
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx server/src/db/migrate.ts",
+    "db:migrate": "tsx --tsconfig tsconfig.server.json server/src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "services:up": "docker compose up -d --wait",
     "services:down": "docker compose down"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
     "better-auth": "^1.7.7",
     "compression": "^1.8.2",
     "drizzle-orm": "^0.45.3",

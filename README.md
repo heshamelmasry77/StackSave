@@ -1,25 +1,22 @@
 # SlackSave
 
-> A fast, privacy-friendly savings calculator. One Node.js app serves both the React frontend and the Express API.
+> Put money aside in two taps and watch your stack grow. One Node.js app serves both the React frontend and the Express API.
 
 SlackSave helps you understand how much you save each month and year, measure your savings rate, and estimate how long it will take to reach a savings goal.
 
-The calculator runs locally in the browser. The Express backend is in place so accounts (Google sign-in, passkeys) and saved savings data can be added without a third-party backend service.
+Type an amount, pick a currency, tap **Save it**. No account needed to start: saves stay on the device, and SlackSave then suggests a free, passwordless account so they're never lost and show up on every device.
 
 ## ✨ Features
 
-- **Monthly savings** — Calculates income minus expenses.
-- **Yearly projection** — Projects monthly savings across 12 months.
-- **Savings rate** — Shows the percentage of monthly income being saved.
-- **Savings goals** — Estimates the months required to reach a target.
-- **Goal progress** — Visualises the monthly contribution against the target.
-- **21 currencies** — EUR, USD, GBP, NOK, SEK, DKK, CHF, CAD, AUD, NZD, JPY, CNY, INR, EGP, AED, SAR, QAR, KWD, BHD, PLN and CZK.
-- **Searchable currency selector** — Flag, code, name and selected-state indicator.
-- **Responsive UI** — Mobile, tablet and desktop layouts.
-- **Animated interface** — Entrance animations, hover states, progress animation and subtle motion.
-- **PWA-ready** — Installable web app with manifest, service worker and application-shell caching.
-- **Single deployable app** — Express serves the API under `/api` and the built frontend from the same origin.
-- **Privacy-first calculator** — Financial inputs are processed locally and are not currently saved to a database.
+- **Save in two taps**: amount, currency, **Save it**. Quick +10 / +50 / +100 buttons.
+- **Totals per currency**: the selected currency's total is shown large and the others as chips. Amounts are never converted.
+- **This month**: how much went aside in the selected currency this calendar month.
+- **History**: every save, newest first, with delete and **Undo**.
+- **No account needed to start**: saves are kept on the device. After the first save, a card offers a free account ("Keep it safe"); dismissed, it becomes a small "Not backed up" badge.
+- **Moves into your account**: on sign-in, device saves are imported once (duplicates impossible: every save has a client-generated UUID), then cleared from the device.
+- **Passwordless sign-in**: Google or an emailed magic link.
+- **21 currencies**, with the first one guessed from the browser's region and the last choice remembered.
+- **Installable PWA**, mobile-first, with the Geist font bundled for offline use.
 
 ## 🧱 Architecture
 
@@ -28,6 +25,7 @@ one Node.js process, one URL
 │
 ├── Express 5
 │   ├── /api/auth/*  Better Auth (Google, magic link)
+│   ├── /api/savings  the user's savings (session required)
 │   ├── /api/*  JSON API
 │   └── /*      React app
 │               dev:  Vite middleware + HMR
@@ -73,7 +71,7 @@ StackSave/
 │       ├── index.css
 │       └── features/
 │           ├── auth/        # sign-in dialog, account button
-│           ├── calculator/  # currencies, CurrencyPicker, SavingsCalculator
+│           ├── savings/     # SaveCard, TotalHero, History, CurrencySheet, useSavings (device ↔ account)
 │           └── pwa/         # useInstallPrompt
 ├── server/
 │   ├── src/
@@ -87,7 +85,7 @@ StackSave/
 │   │   ├── routes/          # one router per API area
 │   │   └── middleware/      # errors, 404s
 │   └── drizzle/             # generated SQL migrations
-├── shared/                  # code shared by client and server (savings maths)
+├── shared/                  # currencies + savings maths, used by client and server
 ├── railway.json             # Railway build/deploy config
 ├── vite.config.ts
 ├── vitest.config.ts
@@ -144,37 +142,18 @@ See `.env.example`. They are validated at startup in `server/src/env.ts`. In dev
 | `SMTP_URL` / `MAIL_FROM` | optional | Enables magic links in production |
 | `PORT` | set by Railway | Default 3000 |
 
-## 💰 Calculator Logic
+## 💰 Savings API
 
-### Monthly savings
+All routes need a signed-in session and only ever touch that user's rows.
 
-```text
-Monthly savings = max(0, monthly income - monthly expenses)
-```
+| Route | What it does |
+| --- | --- |
+| `GET /api/savings` | The user's saves, newest first |
+| `POST /api/savings` | Add `{ id, amount, currency, savedAt }`. `id` is a client UUID; re-posting it is a no-op (safe retries, undo) |
+| `POST /api/savings/import` | Up to 500 device saves at once (the client batches); existing ids are skipped. Returns the full list |
+| `DELETE /api/savings/:id` | Remove one save |
 
-If expenses are higher than income, SlackSave displays zero monthly savings rather than a negative value.
-
-### Yearly savings
-
-```text
-Yearly savings = monthly savings × 12
-```
-
-### Savings rate
-
-```text
-Savings rate = (monthly savings ÷ monthly income) × 100
-```
-
-When income is zero or missing, the savings rate is 0%.
-
-### Time to goal
-
-```text
-Months to goal = ceil(savings goal ÷ monthly savings)
-```
-
-If monthly savings is zero, SlackSave does not display a timeline.
+Validation: amount > 0 and ≤ 1,000,000,000 with at most 4 decimals; a supported currency code; `savedAt` between 2020 and tomorrow. Amounts are stored as `numeric(18,4)`.
 
 ## 💱 Currency Support
 
@@ -204,7 +183,7 @@ If monthly savings is zero, SlackSave does not display a timeline.
 
 Formatting uses the browser's `Intl.NumberFormat` API.
 
-> **Important:** Selecting a currency changes display formatting only. SlackSave does **not** currently convert between currencies or use live exchange rates.
+Totals are kept **per currency**. SlackSave never converts between currencies.
 
 ## 📱 PWA
 
@@ -250,12 +229,10 @@ Each sign-in method switches on only when its credentials are set (`GET /api/con
 
 ## 🔒 Privacy
 
-- Calculator inputs remain in browser state.
-- Calculator values are not currently written to a database. Signing in stores only your email, name and (for Google) profile picture.
-- No financial data is sent to an external calculation API.
-- No account is required to use the calculator.
-
-Future features that store user data must include appropriate access controls.
+- Signed out, saves stay in this browser's storage and never leave the device.
+- Signed in, saves are stored in our own Postgres and every query is scoped to your user id.
+- Signing in stores only your email, name and (for Google) profile picture.
+- No account is required to use SlackSave.
 
 ## 🎨 Design
 
@@ -286,7 +263,7 @@ Unknown `/api/*` paths return a JSON 404, never the React app.
 
 ### Adding a currency
 
-Currencies live in `client/src/features/calculator/currencies.ts`. Add an entry to the `currencies` array; formatting uses the code with `Intl.NumberFormat`.
+Currencies live in `shared/currencies.ts` (used by both the client and the API validation). Add an entry to `CURRENCIES`; formatting uses `Intl.NumberFormat`.
 
 ## 🌐 Deployment
 
@@ -305,10 +282,9 @@ Railway provides `PORT` and HTTPS. Pushes to `main` deploy automatically once th
 
 ### Planned
 
-- 💬 **AI natural-language savings input** — Let users describe income and expenses conversationally, extract structured data, confirm it, then save it to their account.
+- 💬 **Chat** — log saves in plain words ("put aside 200 dirhams today") with a confirmation card, and ask questions ("how much did I save in September?").
 - 🌍 **Multilingual support** — English, Arabic, French, Norwegian, Finnish, Swedish, Danish and German.
 - 🔐 **Passkeys** — fingerprint / Face ID login (#4).
-- 💾 **Persistent savings plans** — Save savings entries per user in Postgres.
 - 📊 **Savings history and charts**
 - 🧾 **Expense categories**
 - 🎯 **Multiple savings goals**
@@ -319,7 +295,7 @@ Railway provides `PORT` and HTTPS. Pushes to `main` deploy automatically once th
 
 ### GitHub issues
 
-- **#1 — AI chat for natural-language savings input**
+- **#1 — AI chat for logging and asking about savings**
 - **#2 — Multilingual language support**
 
 The GitHub issues are the source of truth for detailed acceptance criteria and implementation planning.

@@ -19,7 +19,7 @@ export default defineConfig({
       manifest: {
         name: "SlackSave",
         short_name: "SlackSave",
-        description: "A simple, privacy-friendly savings calculator.",
+        description: "Put money aside and watch your savings grow.",
         theme_color: "#075B3A",
         background_color: "#09090b",
         display: "standalone",
@@ -31,7 +31,7 @@ export default defineConfig({
         navigateFallback: "/index.html",
         // API responses must always come from the server, never the app-shell cache.
         navigateFallbackDenylist: [/^\/api\//],
-        globPatterns: ["**/*.{js,css,html,svg,ico,png,webp}"]
+        globPatterns: ["**/*.{js,css,html,svg,ico,png,webp,woff2}"]
       }
     })
   ]
