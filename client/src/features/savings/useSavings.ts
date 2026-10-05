@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CurrencyCode } from "@shared/currencies";
-import { sortNewestFirst, type SavingEntry } from "@shared/savings";
-import { deleteSaving, fetchSavings, importSavings, postSaving } from "./api";
+import { cleanNote, sortNewestFirst, type SavingEntry } from "@shared/savings";
+import { deleteSaving, fetchSavings, importSavings, patchSavingNote, postSaving } from "./api";
 import { clearDeviceSavings, loadDeviceSavings, saveDeviceSavings } from "./deviceStore";
 
 /** "device": signed out, kept in this browser. "account": signed in, kept on the server. */
@@ -73,8 +73,8 @@ export function useSavings(userId: string | null | undefined) {
   );
 
   const add = useCallback(
-    (amount: number, currency: CurrencyCode) => {
-      const entry: SavingEntry = { id: crypto.randomUUID(), amount, currency, savedAt: new Date().toISOString() };
+    (amount: number, currency: CurrencyCode, note?: string | null) => {
+      const entry: SavingEntry = { id: crypto.randomUUID(), amount, currency, savedAt: new Date().toISOString(), note: cleanNote(note) };
       void put(entry);
       return entry;
     },
@@ -95,8 +95,23 @@ export function useSavings(userId: string | null | undefined) {
     [apply],
   );
 
+  const setNote = useCallback(
+    async (entry: SavingEntry, note: string | null) => {
+      const next = { ...entry, note: cleanNote(note) };
+      apply((prev) => prev.map((e) => (e.id === entry.id ? next : e)));
+      if (modeRef.current !== "account") return;
+      try {
+        await patchSavingNote(entry.id, next.note ?? null);
+      } catch {
+        apply((prev) => prev.map((e) => (e.id === entry.id ? entry : e)));
+        setError("Couldn't update the note. Check your connection and try again.");
+      }
+    },
+    [apply],
+  );
+
   /** Puts back an entry that was just removed (undo). */
   const restore = useCallback((entry: SavingEntry) => void put(entry), [put]);
 
-  return { entries, mode, error, dismissError: () => setError(null), add, remove, restore };
+  return { entries, mode, error, dismissError: () => setError(null), add, remove, restore, setNote };
 }

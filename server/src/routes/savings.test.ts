@@ -42,7 +42,7 @@ describe.skipIf(!process.env.RUN_DB_TESTS)("/api/savings", () => {
     expect((await call(alice, "POST", "", older)).status).toBe(201);
     const created = await call(alice, "POST", "", newer);
     expect(created.status).toBe(201);
-    expect(await created.json()).toEqual({ entry: { ...newer, savedAt: new Date(newer.savedAt).toISOString() } });
+    expect(await created.json()).toEqual({ entry: { ...newer, savedAt: new Date(newer.savedAt).toISOString(), note: null } });
 
     const list = await listOf(alice);
     expect(list.map((e) => e.id)).toEqual([newer.id, older.id]);
@@ -76,7 +76,33 @@ describe.skipIf(!process.env.RUN_DB_TESTS)("/api/savings", () => {
     expect((await call(alice, "POST", "", e)).status).toBe(201);
   });
 
+  it("stores a cleaned note, and lets only the owner edit or clear it", async () => {
+    const e = entry({ amount: 2000, currency: "USD", note: "  In my   safe  " });
+    const created = (await (await call(alice, "POST", "", e)).json()) as { entry: SavingEntry };
+    expect(created.entry.note).toBe("In my safe");
+
+    const edited = await call(alice, "PATCH", `/${e.id}`, { note: "Bank account" });
+    expect(edited.status).toBe(200);
+    expect(((await edited.json()) as { entry: SavingEntry }).entry).toMatchObject({ id: e.id, amount: 2000, note: "Bank account" });
+
+    expect((await call(bob, "PATCH", `/${e.id}`, { note: "mine now" })).status).toBe(404);
+    expect((await call(alice, "PATCH", `/${e.id}`, { note: "x".repeat(201) })).status).toBe(400);
+    expect((await call(alice, "PATCH", `/${crypto.randomUUID()}`, { note: "nope" })).status).toBe(404);
+
+    const cleared = (await (await call(alice, "PATCH", `/${e.id}`, { note: "   " })).json()) as { entry: SavingEntry };
+    expect(cleared.entry.note).toBeNull();
+    expect((await listOf(alice)).find((x) => x.id === e.id)?.note).toBeNull();
+  });
+
+  it("imports notes from device saves", async () => {
+    const erin = await t.signIn();
+    const withNote = entry({ note: "Cash" });
+    const { entries } = (await (await call(erin, "POST", "/import", { entries: [withNote, entry()] })).json()) as { entries: SavingEntry[] };
+    expect(entries.find((x) => x.id === withNote.id)?.note).toBe("Cash");
+  });
+
   it.each([
+    ["note too long", { note: "x".repeat(201) }],
     ["zero amount", { amount: 0 }],
     ["negative amount", { amount: -5 }],
     ["huge amount", { amount: 2e9 }],

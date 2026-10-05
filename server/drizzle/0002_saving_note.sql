@@ -1,0 +1,1 @@
+ALTER TABLE "saving" ADD COLUMN "note" text;

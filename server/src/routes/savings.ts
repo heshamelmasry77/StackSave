@@ -2,7 +2,7 @@ import { Router } from "express";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { isCurrencyCode } from "@shared/currencies";
-import { MAX_AMOUNT, type SavingEntry } from "@shared/savings";
+import { cleanNote, MAX_AMOUNT, MAX_NOTE_LENGTH, type SavingEntry } from "@shared/savings";
 import type { Auth } from "../auth/auth";
 import { requireSession } from "../auth/requireSession";
 import type { Database } from "../db/client";
@@ -10,6 +10,12 @@ import { saving } from "../db/schema";
 import { HttpError } from "../middleware/errors";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+const noteSchema = z
+  .string()
+  .nullish()
+  .transform(cleanNote)
+  .refine((n) => n === null || n.length <= MAX_NOTE_LENGTH, `Note must be ${MAX_NOTE_LENGTH} characters or fewer`);
 
 const entrySchema = z.object({
   id: z.uuid(),
@@ -26,7 +32,10 @@ const entrySchema = z.object({
       const t = Date.parse(s);
       return t >= Date.UTC(2020, 0, 1) && t <= Date.now() + DAY_MS;
     }, "Date out of range"),
+  note: noteSchema,
 });
+
+const updateSchema = z.object({ note: noteSchema });
 
 // The client sends batches of 500; ~110 bytes each stays well under the 100 kB body limit.
 const importSchema = z.object({ entries: z.array(entrySchema).max(500) });
@@ -42,6 +51,7 @@ const toEntry = (row: typeof saving.$inferSelect): SavingEntry => ({
   amount: row.amount,
   currency: row.currency as SavingEntry["currency"],
   savedAt: row.savedAt.toISOString(),
+  note: row.note,
 });
 
 /** The signed-in user's savings. Every query is scoped to the session's user id. */
@@ -85,6 +95,17 @@ export function savingsRouter({ auth, db }: { auth: Auth; db: Database }) {
         .onConflictDoNothing({ target: saving.id });
     }
     res.json({ entries: (await list(uid)).map(toEntry) });
+  });
+
+  router.patch("/:id", async (req, res) => {
+    const { note } = parse(updateSchema, req.body);
+    const [row] = await db
+      .update(saving)
+      .set({ note })
+      .where(and(eq(saving.id, req.params.id), eq(saving.userId, userId(res))))
+      .returning();
+    if (!row) throw new HttpError(404, "Saving not found");
+    res.json({ entry: toEntry(row) });
   });
 
   router.delete("/:id", async (req, res) => {

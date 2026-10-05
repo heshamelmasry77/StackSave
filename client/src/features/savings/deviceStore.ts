@@ -1,6 +1,6 @@
 // Saves made while signed out live on this device until the person creates an account.
 import { isCurrencyCode } from "@shared/currencies";
-import { MAX_AMOUNT, type SavingEntry } from "@shared/savings";
+import { MAX_AMOUNT, MAX_NOTE_LENGTH, type SavingEntry } from "@shared/savings";
 import { readJson, removeKey, writeJson } from "../../lib/storage";
 
 const KEY = "stacksave.savings.v1";
@@ -14,7 +14,8 @@ const isEntry = (v: unknown): v is SavingEntry => {
     e.amount <= MAX_AMOUNT &&
     isCurrencyCode(e.currency) &&
     typeof e.savedAt === "string" &&
-    !Number.isNaN(Date.parse(e.savedAt))
+    !Number.isNaN(Date.parse(e.savedAt)) &&
+    (e.note == null || (typeof e.note === "string" && e.note.length <= MAX_NOTE_LENGTH))
   );
 };
 
