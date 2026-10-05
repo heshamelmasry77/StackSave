@@ -67,7 +67,8 @@ export function SaveCard({ currency, disabled, noteSuggestions, onOpenCurrencies
           <Label htmlFor="save-note" className="text-sm font-semibold text-foreground/85">
             Note <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
-          <Input id="save-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={MAX_NOTE_LENGTH} autoComplete="off" placeholder="Where is it? e.g. In my safe" className="bg-background" autoFocus />
+          <p id="save-note-hint" className="-mt-1 text-[13px] text-muted-foreground">Where it's kept or what it's for.</p>
+          <Input id="save-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={MAX_NOTE_LENGTH} autoComplete="off" aria-describedby="save-note-hint" className="bg-background" autoFocus />
           <NoteSuggestions suggestions={noteSuggestions} current={note} onPick={setNote} />
         </div>
       ) : (

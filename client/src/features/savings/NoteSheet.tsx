@@ -29,7 +29,8 @@ export function NoteSheet({ entry, suggestions, onSave, onClose }: Props) {
     <AppSheet eyebrow={`+${formatMoney(entry.amount, entry.currency)} · ${savedAtLabel(entry.savedAt)}`} title={entry.note ? "Edit note" : "Add a note"} onClose={onClose}>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <Label htmlFor="edit-note" className="text-sm font-semibold text-foreground/85">Note</Label>
-        <Input id="edit-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={MAX_NOTE_LENGTH} autoComplete="off" placeholder="Where is it? e.g. In my safe" />
+        <p id="edit-note-hint" className="-mt-1.5 text-[13px] text-muted-foreground">Where it's kept or what it's for.</p>
+        <Input id="edit-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={MAX_NOTE_LENGTH} autoComplete="off" aria-describedby="edit-note-hint" />
         <NoteSuggestions suggestions={suggestions} current={note} onPick={setNote} />
         <Button type="submit" size="lg" className="mt-1">Save note</Button>
         {entry.note && (

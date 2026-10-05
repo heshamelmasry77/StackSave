@@ -11,7 +11,7 @@ Type an amount, pick a currency, tap **Save it**. No account needed to start: sa
 - **Save in two taps**: amount, currency, **Save it**. Quick +10 / +50 / +100 buttons.
 - **Totals per currency**: the selected currency's total is shown large and the others as chips. Amounts are never converted.
 - **This month**: how much went aside in the selected currency this calendar month.
-- **Notes**: optionally say where the money is or what it's for ("In my safe", "Bank account", "Cash"), with quick picks from your recent notes. Tap a history entry to add, change or remove its note.
+- **Notes**: optionally say where the money is kept or what it's for, in your own words. Once you've written notes, your recent ones appear as quick picks (no presets). Tap a history entry to add, change or remove its note.
 - **History**: every save, newest first, with its note, delete and **Undo**.
 - **No account needed to start**: saves are kept on the device. After the first save, a card offers a free account ("Keep it safe"); dismissed, it becomes a small "Not backed up" badge.
 - **Moves into your account**: on sign-in, device saves are imported once (duplicates impossible: every save has a client-generated UUID), then cleared from the device.
