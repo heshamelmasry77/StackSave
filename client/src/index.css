@@ -25,7 +25,7 @@
   --muted-foreground: #a1a1aa;    /* zinc-400: 7.8:1 on background */
   --accent: #27272a;
   --accent-foreground: #fafafa;
-  --destructive: #f87171;
+  --destructive: #dc2626;          /* red-600: white text 4.8:1 */
   --border: #27272a;
   --input: #3f3f46;               /* zinc-700 */
   --ring: #bef264;

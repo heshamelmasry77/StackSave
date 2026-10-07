@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { CircleAlertIcon } from "lucide-react";
+import { CircleAlertIcon, LockKeyholeIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney, type CurrencyCode } from "@shared/currencies";
 import { noteSuggestions, totalsByCurrency, usedCurrencies, type SavingEntry } from "@shared/savings";
@@ -9,6 +9,11 @@ import { AccountMenu } from "@/features/auth/AccountMenu";
 import { takeAuthErrorFromUrl } from "@/features/auth/authErrors";
 import { SignInSheet } from "@/features/auth/SignInSheet";
 import { useAuthConfig } from "@/features/auth/useAuthConfig";
+import { AppLockSheet } from "@/features/lock/AppLockSheet";
+import { LockOffer } from "@/features/lock/LockOffer";
+import { LockScreen } from "@/features/lock/LockScreen";
+import { dismissLockOffer, isLockOfferDismissed } from "@/features/lock/lockStore";
+import { useAppLock } from "@/features/lock/useAppLock";
 import { useInstallPrompt } from "@/features/pwa/useInstallPrompt";
 import { BackupNudge } from "@/features/savings/BackupNudge";
 import { CurrencySheet } from "@/features/savings/CurrencySheet";
@@ -30,6 +35,7 @@ function App() {
   const [currency, setCurrency] = usePreferredCurrency();
   const authConfig = useAuthConfig();
   const { canInstall, install } = useInstallPrompt();
+  const lock = useAppLock();
 
   // A failed magic-link / Google callback lands back here with ?error=..., so open sign-in to explain.
   const [urlError] = useState(takeAuthErrorFromUrl);
@@ -37,11 +43,15 @@ function App() {
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [editing, setEditing] = useState<SavingEntry | null>(null);
   const [nudgeDismissed, setNudgeDismissed] = useState(() => readJson(NUDGE_DISMISSED_KEY) === true);
+  const [lockSheetOpen, setLockSheetOpen] = useState(false);
+  const [lockOfferDismissed, setLockOfferDismissed] = useState(isLockOfferDismissed);
 
   const canSignIn = authConfig !== null && (authConfig.google || authConfig.magicLink);
   const onDevice = savings.mode === "device" && savings.entries.length > 0;
   const showNudge = onDevice && canSignIn && !nudgeDismissed;
   const showBackupBadge = onDevice && canSignIn && nudgeDismissed;
+  // Opt-in lock offer: once there's something worth protecting, and never on top of the backup nudge.
+  const showLockOffer = !lock.enabled && !lockOfferDismissed && !showNudge && savings.entries.length >= 2;
 
   const dismissNudge = () => {
     setNudgeDismissed(true);
@@ -56,6 +66,25 @@ function App() {
     });
   };
   const closeSignIn = useCallback(() => setSignInOpen(false), []);
+  const closeLockSheet = useCallback(() => setLockSheetOpen(false), []);
+  const dismissOffer = () => {
+    dismissLockOffer();
+    setLockOfferDismissed(true);
+  };
+
+  // Forgot PIN: signed in → sign in again (data comes back from the account); signed out → erase this device's saves.
+  const resetLock = async () => {
+    if (session) {
+      await authClient.signOut();
+      lock.disable();
+      setSignInOpen(true);
+    } else {
+      savings.clearDevice();
+      lock.disable();
+      toast("Lock removed and this device's saves erased");
+    }
+  };
+
   const closeCurrencies = useCallback(() => setCurrencyOpen(false), []);
   const closeEditor = useCallback(() => setEditing(null), []);
   const suggestions = noteSuggestions(savings.entries);
@@ -67,6 +96,16 @@ function App() {
         totals: Object.entries(totalsByCurrency(savings.entries)).map(([code, total]) => formatMoney(total!, code as CurrencyCode)),
       }
     : null;
+
+  // After every hook above: an early return before them would change the hook order between renders.
+  if (lock.locked) {
+    return (
+      <>
+        <LockScreen lock={lock} signedIn={Boolean(session)} onReset={() => void resetLock()} />
+        <Toaster position="bottom-center" />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-dvh">
@@ -86,6 +125,9 @@ function App() {
                 Not backed up
               </Button>
             )}
+            <Button variant="ghost" size="icon" onClick={() => setLockSheetOpen(true)} aria-label={lock.enabled ? "App lock settings (on)" : "App lock settings"} className={lock.enabled ? "text-primary" : "text-muted-foreground"}>
+              <LockKeyholeIcon />
+            </Button>
             {session ? (
               <AccountMenu user={session.user} />
             ) : (
@@ -117,11 +159,14 @@ function App() {
           <BackupNudge lastSaved={formatMoney(latest.amount, latest.currency)} onKeepSafe={() => setSignInOpen(true)} onDismiss={dismissNudge} />
         )}
 
+        {showLockOffer && <LockOffer onSetUp={() => setLockSheetOpen(true)} onDismiss={dismissOffer} />}
+
         <History entries={savings.entries} onEdit={setEditing} onRemove={removeEntry} />
       </main>
 
       {currencyOpen && <CurrencySheet value={currency} used={usedCurrencies(savings.entries)} onPick={setCurrency} onClose={closeCurrencies} />}
       {editing && <NoteSheet entry={editing} suggestions={suggestions} onSave={(note) => void savings.setNote(editing, note)} onClose={closeEditor} />}
+      {lockSheetOpen && <AppLockSheet lock={lock} onClose={closeLockSheet} />}
       {signInOpen && authConfig && <SignInSheet config={authConfig} initialError={urlError} carried={carried} onClose={closeSignIn} />}
       <Toaster position="bottom-center" />
     </div>

@@ -16,6 +16,7 @@ Type an amount, pick a currency, tap **Save it**. No account needed to start: sa
 - **No account needed to start**: saves are kept on the device. After the first save, a card offers a free account ("Keep it safe"); dismissed, it becomes a small "Not backed up" badge.
 - **Moves into your account**: on sign-in, device saves are imported once (duplicates impossible: every save has a client-generated UUID), then cleared from the device.
 - **Passwordless sign-in**: Google or an emailed magic link.
+- **App lock (opt-in)**: unlock with fingerprint / Face ID / Windows Hello (WebAuthn platform authenticator) or a 4–6 digit PIN, on opening and after more than a minute away. The PIN is stored only as a salted PBKDF2 hash on the device; 5 wrong tries trigger a growing wait. It's a privacy screen per device, not encryption.
 - **21 currencies**, with the first one guessed from the browser's region and the last choice remembered.
 - **Installable PWA**, mobile-first, with the Geist font bundled for offline use.
 
@@ -74,6 +75,7 @@ StackSave/
 │       ├── index.css
 │       └── features/
 │           ├── auth/        # sign-in dialog, account button
+│           ├── lock/        # app lock: PIN hashing, WebAuthn biometric, lock screen, settings
 │           ├── savings/     # SaveCard, TotalHero, History, CurrencySheet, useSavings (device ↔ account)
 │           └── pwa/         # useInstallPrompt
 ├── server/

@@ -113,5 +113,11 @@ export function useSavings(userId: string | null | undefined) {
   /** Puts back an entry that was just removed (undo). */
   const restore = useCallback((entry: SavingEntry) => void put(entry), [put]);
 
-  return { entries, mode, error, dismissError: () => setError(null), add, remove, restore, setNote };
+  /** Erases the saves kept on this device (used when resetting a forgotten app-lock PIN while signed out). */
+  const clearDevice = useCallback(() => {
+    clearDeviceSavings();
+    if (modeRef.current === "device") setEntries([]);
+  }, []);
+
+  return { entries, mode, error, dismissError: () => setError(null), add, remove, restore, setNote, clearDevice };
 }
