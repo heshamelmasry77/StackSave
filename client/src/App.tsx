@@ -18,7 +18,7 @@ import { useInstallPrompt } from "@/features/pwa/useInstallPrompt";
 import { BackupNudge } from "@/features/savings/BackupNudge";
 import { CurrencySheet } from "@/features/savings/CurrencySheet";
 import { History } from "@/features/savings/History";
-import { NoteSheet } from "@/features/savings/NoteSheet";
+import { EditSavingSheet } from "@/features/savings/EditSavingSheet";
 import { SaveCard } from "@/features/savings/SaveCard";
 import { TotalHero } from "@/features/savings/TotalHero";
 import { usePreferredCurrency } from "@/features/savings/usePreferredCurrency";
@@ -165,7 +165,19 @@ function App() {
       </main>
 
       {currencyOpen && <CurrencySheet value={currency} used={usedCurrencies(savings.entries)} onPick={setCurrency} onClose={closeCurrencies} />}
-      {editing && <NoteSheet entry={editing} suggestions={suggestions} onSave={(note) => void savings.setNote(editing, note)} onClose={closeEditor} />}
+      {editing && (
+        <EditSavingSheet
+          entry={editing}
+          usedCurrencies={usedCurrencies(savings.entries)}
+          noteSuggestions={suggestions}
+          onSave={(changes) => {
+            void savings.update(editing, changes);
+            toast("Save updated");
+          }}
+          onDelete={() => removeEntry(editing)}
+          onClose={closeEditor}
+        />
+      )}
       {lockSheetOpen && <AppLockSheet lock={lock} onClose={closeLockSheet} />}
       {signInOpen && authConfig && <SignInSheet config={authConfig} initialError={urlError} carried={carried} onClose={closeSignIn} />}
       <Toaster position="bottom-center" />

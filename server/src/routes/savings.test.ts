@@ -94,6 +94,24 @@ describe.skipIf(!process.env.RUN_DB_TESTS)("/api/savings", () => {
     expect((await listOf(alice)).find((x) => x.id === e.id)?.note).toBeNull();
   });
 
+  it("edits amount and currency without touching the note, and validates edits", async () => {
+    const e = entry({ amount: 200, currency: "EUR", note: "Safe" });
+    await call(alice, "POST", "", e);
+
+    const res = await call(alice, "PATCH", `/${e.id}`, { amount: 250.5 });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { entry: SavingEntry }).entry).toMatchObject({ amount: 250.5, currency: "EUR", note: "Safe" });
+
+    const both = (await (await call(alice, "PATCH", `/${e.id}`, { amount: 300, currency: "USD" })).json()) as { entry: SavingEntry };
+    expect(both.entry).toMatchObject({ amount: 300, currency: "USD", note: "Safe", savedAt: new Date(e.savedAt).toISOString() });
+
+    for (const bad of [{}, { amount: 0 }, { amount: -1 }, { amount: 2e9 }, { amount: 1.23456 }, { currency: "XYZ" }]) {
+      expect((await call(alice, "PATCH", `/${e.id}`, bad)).status).toBe(400);
+    }
+    expect((await call(bob, "PATCH", `/${e.id}`, { amount: 1 })).status).toBe(404);
+    expect((await listOf(alice)).find((x) => x.id === e.id)).toMatchObject({ amount: 300, currency: "USD", note: "Safe" });
+  });
+
   it("imports notes from device saves", async () => {
     const erin = await t.signIn();
     const withNote = entry({ note: "Cash" });

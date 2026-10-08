@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CurrencyCode } from "@shared/currencies";
 import { cleanNote, sortNewestFirst, type SavingEntry } from "@shared/savings";
-import { deleteSaving, fetchSavings, importSavings, patchSavingNote, postSaving } from "./api";
+import { deleteSaving, fetchSavings, importSavings, patchSaving, postSaving, type SavingChanges } from "./api";
 import { clearDeviceSavings, loadDeviceSavings, saveDeviceSavings } from "./deviceStore";
 
 /** "device": signed out, kept in this browser. "account": signed in, kept on the server. */
@@ -95,16 +95,18 @@ export function useSavings(userId: string | null | undefined) {
     [apply],
   );
 
-  const setNote = useCallback(
-    async (entry: SavingEntry, note: string | null) => {
-      const next = { ...entry, note: cleanNote(note) };
+  /** Edits amount, currency and/or note of a save already in the history. */
+  const update = useCallback(
+    async (entry: SavingEntry, changes: SavingChanges) => {
+      const clean: SavingChanges = { ...changes, ...("note" in changes ? { note: cleanNote(changes.note) } : {}) };
+      const next = { ...entry, ...clean };
       apply((prev) => prev.map((e) => (e.id === entry.id ? next : e)));
       if (modeRef.current !== "account") return;
       try {
-        await patchSavingNote(entry.id, next.note ?? null);
+        await patchSaving(entry.id, clean);
       } catch {
         apply((prev) => prev.map((e) => (e.id === entry.id ? entry : e)));
-        setError("Couldn't update the note. Check your connection and try again.");
+        setError("Couldn't save your changes. Check your connection and try again.");
       }
     },
     [apply],
@@ -119,5 +121,5 @@ export function useSavings(userId: string | null | undefined) {
     if (modeRef.current === "device") setEntries([]);
   }, []);
 
-  return { entries, mode, error, dismissError: () => setError(null), add, remove, restore, setNote, clearDevice };
+  return { entries, mode, error, dismissError: () => setError(null), add, remove, restore, update, clearDevice };
 }
