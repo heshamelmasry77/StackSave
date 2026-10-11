@@ -22,8 +22,8 @@ export function History({ entries, onEdit, onRemove }: Props) {
             const amount = `+${formatMoney(e.amount, e.currency)}`;
             return (
               <li key={e.id} className="flex animate-fade-up items-center gap-1 rounded-2xl border bg-card/60 p-1.5">
-                {/* Tapping the entry opens it to add or change its note. */}
-                <button type="button" onClick={() => onEdit(e)} aria-label={`${amount}${e.note ? `, ${e.note}` : ""}. Edit note`} className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-1 text-left outline-none transition hover:bg-accent/50 focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                {/* Tapping the entry opens it to edit the amount, currency or note. */}
+                <button type="button" onClick={() => onEdit(e)} aria-label={`${amount}${e.note ? `, ${e.note}` : ""}. Edit`} className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-1 text-left outline-none transition hover:bg-accent/50 focus-visible:ring-[3px] focus-visible:ring-ring/50">
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="text-[17px] font-bold tabular-nums text-primary">{amount}</span>
                     {e.note && <span className="truncate text-[13px] text-foreground/75">{e.note}</span>}

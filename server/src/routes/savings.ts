@@ -17,14 +17,18 @@ const noteSchema = z
   .transform(cleanNote)
   .refine((n) => n === null || n.length <= MAX_NOTE_LENGTH, `Note must be ${MAX_NOTE_LENGTH} characters or fewer`);
 
+const amountSchema = z
+  .number()
+  .positive()
+  .max(MAX_AMOUNT)
+  .refine((n) => Math.round(n * 10_000) === n * 10_000, "At most 4 decimal places");
+
+const currencySchema = z.string().refine(isCurrencyCode, "Unsupported currency");
+
 const entrySchema = z.object({
   id: z.uuid(),
-  amount: z
-    .number()
-    .positive()
-    .max(MAX_AMOUNT)
-    .refine((n) => Math.round(n * 10_000) === n * 10_000, "At most 4 decimal places"),
-  currency: z.string().refine(isCurrencyCode, "Unsupported currency"),
+  amount: amountSchema,
+  currency: currencySchema,
   savedAt: z.iso
     .datetime({ offset: true })
     // Clocks drift, but a save can't be from the far future or before the app existed.
@@ -35,7 +39,10 @@ const entrySchema = z.object({
   note: noteSchema,
 });
 
-const updateSchema = z.object({ note: noteSchema });
+// Partial edit: only the fields sent change. A missing `note` leaves the note alone; `null` or "" removes it.
+const updateSchema = z
+  .object({ amount: amountSchema.optional(), currency: currencySchema.optional(), note: noteSchema.optional() })
+  .refine((u) => u.amount !== undefined || u.currency !== undefined || u.note !== undefined, "Nothing to update");
 
 // The client sends batches of 500; ~110 bytes each stays well under the 100 kB body limit.
 const importSchema = z.object({ entries: z.array(entrySchema).max(500) });
@@ -98,10 +105,11 @@ export function savingsRouter({ auth, db }: { auth: Auth; db: Database }) {
   });
 
   router.patch("/:id", async (req, res) => {
-    const { note } = parse(updateSchema, req.body);
+    const update = parse(updateSchema, req.body);
+    const changes = Object.fromEntries(Object.entries(update).filter(([, v]) => v !== undefined));
     const [row] = await db
       .update(saving)
-      .set({ note })
+      .set(changes)
       .where(and(eq(saving.id, req.params.id), eq(saving.userId, userId(res))))
       .returning();
     if (!row) throw new HttpError(404, "Saving not found");

@@ -29,7 +29,10 @@ export async function importSavings(entries: SavingEntry[]) {
   return result;
 }
 
-export const patchSavingNote = (id: string, note: string | null) =>
-  request<{ entry: SavingEntry }>(`/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ note }) }).then((r) => r.entry);
+export type SavingChanges = Partial<Pick<SavingEntry, "amount" | "currency" | "note">>;
+
+/** Changes any of amount, currency and note; fields left out stay as they are. */
+export const patchSaving = (id: string, changes: SavingChanges) =>
+  request<{ entry: SavingEntry }>(`/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(changes) }).then((r) => r.entry);
 
 export const deleteSaving = (id: string) => request<void>(`/${encodeURIComponent(id)}`, { method: "DELETE" });
